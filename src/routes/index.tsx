@@ -237,6 +237,13 @@ function Home() {
                 title="Acoustic findings"
                 subtitle="How the voice sounds"
                 items={report.acousticFindings}
+                extra={audioUrl ? <AudioWaveform src={audioUrl} /> : null}
+              />
+              <FindingsCard
+                icon={<Brain className="h-4 w-4" />}
+                title="Linguistic findings"
+                subtitle="What was said"
+                items={report.linguisticFindings}
               />
               <FindingsCard
                 icon={<Brain className="h-4 w-4" />}
