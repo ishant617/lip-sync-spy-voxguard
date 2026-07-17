@@ -159,6 +159,12 @@ Look for these fingerprints:
 - Room-tone / noise floor that doesn't match a real recording chain
 - Formant transitions too clean between phonemes
 
+DEEPFAKE LOCALIZATION — critically important:
+Break the audio into 4-10 consecutive, non-overlapping segments covering the FULL clip from 0s to the estimated end.
+For each segment set { start, end } in seconds, a per-segment synthetic-probability score (0-100), a label ("human" | "suspicious" | "synthetic"), and a short note describing the strongest local cue (e.g. "vocoder hiss on sibilants", "natural inhale", "flat pitch contour").
+Also return estimatedDuration in seconds for the whole clip. Segments MUST tile the clip (no gaps, no overlap, monotonically increasing).
+This locates WHERE in the audio the synthesis lives — partial deepfakes (a real caller spliced with a cloned phrase) must show mixed human + synthetic segments.
+
 Set suspectedFamily to a concrete guess (e.g. "ElevenLabs-style neural TTS", "Diffusion vocoder (Bark/XTTS)", "Concatenative TTS", "Human speech — no synthesis markers").
 Set vocoderFingerprint to a short technical phrase describing the strongest spectral clue.`;
 
@@ -171,11 +177,29 @@ const DEEPFAKE_SCHEMA = {
     suspectedFamily: { type: "string" },
     vocoderFingerprint: { type: "string" },
     modelNotes: { type: "string" },
+    estimatedDuration: { type: "number" },
     artifacts: {
       type: "array",
       items: FINDING_SCHEMA,
       minItems: 1,
       maxItems: 6,
+    },
+    segments: {
+      type: "array",
+      minItems: 2,
+      maxItems: 12,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          start: { type: "number" },
+          end: { type: "number" },
+          score: { type: "number" },
+          label: { type: "string", enum: ["human", "suspicious", "synthetic"] },
+          note: { type: "string" },
+        },
+        required: ["start", "end", "score", "label", "note"],
+      },
     },
   },
   required: [
@@ -185,8 +209,11 @@ const DEEPFAKE_SCHEMA = {
     "vocoderFingerprint",
     "modelNotes",
     "artifacts",
+    "segments",
+    "estimatedDuration",
   ],
 } as const;
+
 
 async function callGateway(apiKey: string, body: unknown) {
   const res = await fetch(GATEWAY_URL, {
