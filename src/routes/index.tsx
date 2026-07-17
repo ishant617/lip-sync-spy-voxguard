@@ -28,9 +28,12 @@ import {
   type DeepfakeAnalysis,
   type Finding,
   type Severity,
+  type HumanVerifier,
+  type VoiceOrigin,
 } from "@/lib/fraud-detection.functions";
 import { SpectrogramCompare } from "@/components/SpectrogramCompare";
 import { DeepfakeLocalization } from "@/components/DeepfakeLocalization";
+import { User, CheckCircle2, XCircle, HelpCircle } from "lucide-react";
 
 
 
