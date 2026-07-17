@@ -230,11 +230,11 @@ function Home() {
           <section className="mt-10 space-y-6">
             <VerdictCard report={report} onReset={reset} />
 
+            <DeepfakeSpecialistCard analysis={report.deepfakeAnalysis} />
+
             <EvidenceCard evidence={report.supportingEvidence} />
 
             <SpectrogramCompare src={audioUrl} />
-
-
 
             <div className="grid gap-6 md:grid-cols-2">
               <FindingsCard
@@ -243,12 +243,6 @@ function Home() {
                 subtitle="How the voice sounds"
                 items={report.acousticFindings}
                 extra={audioUrl ? <AudioWaveform src={audioUrl} /> : null}
-              />
-              <FindingsCard
-                icon={<Brain className="h-4 w-4" />}
-                title="Linguistic findings"
-                subtitle="What was said"
-                items={report.linguisticFindings}
               />
               <FindingsCard
                 icon={<Brain className="h-4 w-4" />}
@@ -270,6 +264,7 @@ function Home() {
             )}
           </section>
         )}
+
 
         <section id="how" className="mt-16">
           <h2 className="mb-6 text-2xl font-semibold">How VoxGuard works</h2>
