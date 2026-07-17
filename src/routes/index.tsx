@@ -16,6 +16,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AudioWaveform } from "@/components/AudioWaveform";
 import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import { Toaster } from "@/components/ui/sonner";
