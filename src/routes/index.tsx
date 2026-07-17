@@ -10,10 +10,8 @@ import {
   Square,
   Upload,
   Loader2,
-  Activity,
   Waves,
   Brain,
-  Gavel,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -22,7 +20,6 @@ import { Toaster } from "@/components/ui/sonner";
 import {
   analyzeVoice,
   type DetectionReport,
-  type LoopResult,
 } from "@/lib/fraud-detection.functions";
 
 export const Route = createFileRoute("/")({
@@ -32,13 +29,12 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Detect AI-cloned voices and voice-fraud calls with an iterative loop-engineering pipeline. Upload or record audio and get forensic, linguistic and adversarial-refined verdicts.",
+          "Detect AI-cloned voices and voice-fraud calls. Upload or record audio and get an instant forensic verdict.",
       },
       { property: "og:title", content: "VoxGuard — AI Voice & Fraud Detection" },
       {
         property: "og:description",
-        content:
-          "Loop-engineered detection of deepfake voices and social-engineering fraud calls.",
+        content: "Detect deepfake voices and social-engineering fraud calls.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -64,7 +60,7 @@ function Home() {
       setStatus("analyzing");
       setReport(null);
       setProgress(8);
-      const tick = setInterval(() => setProgress((p) => Math.min(92, p + 4)), 700);
+      const tick = setInterval(() => setProgress((p) => Math.min(92, p + 6)), 500);
       try {
         const base64 = await blobToBase64(blob);
         const result = await analyze({ data: { audioBase64: base64, format } });
@@ -130,12 +126,9 @@ function Home() {
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-6 w-6 text-emerald-400" />
             <span className="text-lg font-semibold tracking-tight">VoxGuard</span>
-            <span className="ml-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-emerald-300">
-              Loop-Engineered
-            </span>
           </div>
           <a
-            href="#pipeline"
+            href="#how"
             className="text-sm text-slate-400 transition hover:text-slate-100"
           >
             How it works
@@ -149,9 +142,9 @@ function Home() {
             Detect AI-cloned voices &amp; fraud calls
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-pretty text-slate-400">
-            A three-loop adversarial pipeline: acoustic forensics → linguistic
-            analysis → adversarial refinement. Each pass sees the previous loop&apos;s
-            findings and challenges them.
+            Record or upload a suspicious call. VoxGuard analyses the acoustic
+            signal and the spoken content to flag synthetic voices and
+            social-engineering fraud.
           </p>
         </section>
 
@@ -214,15 +207,13 @@ function Home() {
             </label>
           </div>
 
-          {audioUrl && (
-            <audio src={audioUrl} controls className="mt-4 w-full" />
-          )}
+          {audioUrl && <audio src={audioUrl} controls className="mt-4 w-full" />}
 
           {status === "analyzing" && (
             <div className="mt-6">
               <div className="mb-2 flex items-center gap-2 text-sm text-slate-300">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Running loop-engineered detection pipeline…
+                Analysing audio…
               </div>
               <Progress value={progress} className="h-2 bg-white/10" />
             </div>
@@ -232,7 +223,20 @@ function Home() {
         {report && (
           <section className="mt-10 space-y-6">
             <VerdictCard report={report} onReset={reset} />
-            <LoopTimeline loops={report.loops} />
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <FindingsCard
+                icon={<Waves className="h-4 w-4" />}
+                title="Acoustic findings"
+                items={report.acousticFindings}
+              />
+              <FindingsCard
+                icon={<Brain className="h-4 w-4" />}
+                title="Linguistic findings"
+                items={report.linguisticFindings}
+              />
+            </div>
+
             {report.transcript && (
               <Card className="border-white/10 bg-white/[0.03] p-6">
                 <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-slate-400">
@@ -246,23 +250,18 @@ function Home() {
           </section>
         )}
 
-        <section id="pipeline" className="mt-16">
-          <h2 className="mb-6 text-2xl font-semibold">The loop-engineering pipeline</h2>
-          <div className="grid gap-4 md:grid-cols-3">
+        <section id="how" className="mt-16">
+          <h2 className="mb-6 text-2xl font-semibold">How VoxGuard works</h2>
+          <div className="grid gap-4 md:grid-cols-2">
             <PipelineCard
               icon={<Waves className="h-5 w-5" />}
-              title="Loop 1 — Acoustic Forensics"
-              text="Spectral artifacts, prosody, breathing, room-tone. Detects TTS / voice-clone signatures (ElevenLabs, VALL-E, XTTS)."
+              title="Acoustic forensics"
+              text="Inspects spectral artifacts, prosody, breathing and room-tone for TTS / voice-clone signatures (ElevenLabs, VALL-E, XTTS)."
             />
             <PipelineCard
               icon={<Brain className="h-5 w-5" />}
-              title="Loop 2 — Linguistic Analysis"
-              text="Scripted phrasing, urgency, authority impersonation, OTP/wire-transfer/gift-card requests, social-engineering markers."
-            />
-            <PipelineCard
-              icon={<Gavel className="h-5 w-5" />}
-              title="Loop 3 — Adversarial Refinement"
-              text="Reviews prior loops, challenges weak evidence, resolves contradictions and outputs the calibrated final verdict."
+              title="Linguistic analysis"
+              text="Flags scripted phrasing, urgency, authority impersonation, and requests for OTPs, gift-cards or wire transfers."
             />
           </div>
         </section>
@@ -293,7 +292,7 @@ function VerdictCard({
           </div>
           <div>
             <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Final verdict
+              Verdict
             </div>
             <div className="text-2xl font-bold">{style.label}</div>
             <p className="mt-2 max-w-xl text-sm text-slate-300">{report.reasoning}</p>
@@ -307,12 +306,12 @@ function VerdictCard({
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <ScoreBar
           label="AI / synthetic-voice likelihood"
-          value={report.finalAiVoiceScore}
+          value={report.aiVoiceScore}
           icon={<Bot className="h-4 w-4" />}
         />
         <ScoreBar
           label="Fraud-intent likelihood"
-          value={report.finalFraudScore}
+          value={report.fraudScore}
           icon={<ShieldAlert className="h-4 w-4" />}
         />
       </div>
@@ -344,11 +343,7 @@ function ScoreBar({
   icon: React.ReactNode;
 }) {
   const color =
-    value >= 65
-      ? "bg-rose-500"
-      : value >= 40
-        ? "bg-amber-400"
-        : "bg-emerald-500";
+    value >= 65 ? "bg-rose-500" : value >= 40 ? "bg-amber-400" : "bg-emerald-500";
   return (
     <div>
       <div className="mb-1 flex items-center justify-between text-xs text-slate-400">
@@ -368,54 +363,31 @@ function ScoreBar({
   );
 }
 
-function LoopTimeline({ loops }: { loops: LoopResult[] }) {
+function FindingsCard({
+  icon,
+  title,
+  items,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  items: string[];
+}) {
   return (
     <Card className="border-white/10 bg-white/[0.03] p-6">
-      <div className="mb-4 flex items-center gap-2">
-        <Activity className="h-4 w-4 text-emerald-400" />
+      <div className="mb-3 flex items-center gap-2 text-emerald-400">
+        {icon}
         <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
-          Loop-by-loop analysis
+          {title}
         </h3>
       </div>
-      <div className="space-y-4">
-        {loops.map((l) => (
-          <div
-            key={l.iteration}
-            className="rounded-lg border border-white/10 bg-white/[0.02] p-4"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-mono text-emerald-300">
-                  loop {l.iteration}
-                </span>
-                <span className="font-semibold">{l.name}</span>
-              </div>
-              <div className="flex gap-3 text-xs">
-                <span className="rounded bg-white/5 px-2 py-1 font-mono">
-                  ai {l.aiVoiceScore}%
-                </span>
-                <span className="rounded bg-white/5 px-2 py-1 font-mono">
-                  fraud {l.fraudScore}%
-                </span>
-              </div>
-            </div>
-            <p className="mt-1 text-xs text-slate-500">{l.focus}</p>
-            <ul className="mt-3 space-y-1 text-sm text-slate-200">
-              {l.findings.map((f, i) => (
-                <li key={i} className="flex gap-2">
-                  <span className="text-emerald-400">•</span>
-                  {f}
-                </li>
-              ))}
-            </ul>
-            {l.refinedFrom && (
-              <div className="mt-3 rounded border border-amber-400/20 bg-amber-400/5 p-2 text-xs text-amber-200">
-                <span className="font-semibold">Refinement:</span> {l.refinedFrom}
-              </div>
-            )}
-          </div>
+      <ul className="space-y-2 text-sm text-slate-200">
+        {items.map((f, i) => (
+          <li key={i} className="flex gap-2">
+            <span className="text-emerald-400">•</span>
+            {f}
+          </li>
         ))}
-      </div>
+      </ul>
     </Card>
   );
 }
