@@ -406,11 +406,13 @@ function FindingsCard({
   title,
   subtitle,
   items,
+  extra,
 }: {
   icon: React.ReactNode;
   title: string;
   subtitle: string;
   items: Finding[];
+  extra?: React.ReactNode;
 }) {
   return (
     <Card className="border-white/10 bg-white/[0.03] p-6">
@@ -423,6 +425,7 @@ function FindingsCard({
           <p className="text-xs text-slate-500">{subtitle}</p>
         </div>
       </div>
+      {extra}
       <ul className="space-y-3">
         {items.map((f, i) => (
           <li
