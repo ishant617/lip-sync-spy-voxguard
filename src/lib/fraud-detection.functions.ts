@@ -22,6 +22,21 @@ export type Evidence = {
   why: string;
 };
 
+export type DeepfakeArtifact = {
+  name: string;
+  detail: string;
+  severity: Severity;
+};
+
+export type DeepfakeAnalysis = {
+  deepfakeScore: number; // 0-100 specialist model's synthetic likelihood
+  humanLikelihood: number; // 0-100
+  suspectedFamily: string; // e.g. "ElevenLabs-style neural TTS" / "Human speech"
+  vocoderFingerprint: string; // short technical description
+  artifacts: DeepfakeArtifact[];
+  modelNotes: string;
+};
+
 export type DetectionReport = {
   transcript: string;
   aiVoiceScore: number;
@@ -30,11 +45,13 @@ export type DetectionReport = {
   acousticFindings: Finding[];
   linguisticFindings: Finding[];
   supportingEvidence: Evidence[];
+  deepfakeAnalysis: DeepfakeAnalysis;
   verdict: "authentic" | "suspicious" | "likely_fraud" | "ai_synthesized";
   headline: string;
   reasoning: string;
   recommendedActions: string[];
 };
+
 
 const SYSTEM_PROMPT = `You are an AI voice-fraud detection engineer. Analyse the provided audio and return a JSON verdict.
 
