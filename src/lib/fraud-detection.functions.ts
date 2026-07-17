@@ -305,7 +305,7 @@ export const analyzeVoice = createServerFn({ method: "POST" })
       input_audio: { data: data.audioBase64, format: data.format },
     };
 
-    const [parsed, deepfake] = await Promise.all([
+    const [parsed, deepfake, human] = await Promise.all([
       callGateway(apiKey, {
         model: MODEL,
         messages: [
@@ -365,13 +365,55 @@ export const analyzeVoice = createServerFn({ method: "POST" })
         segments: LocalizedSegment[];
         estimatedDuration: number;
       }>,
+      callGateway(apiKey, {
+        model: MODEL,
+        messages: [
+          { role: "system", content: HUMAN_SYSTEM_PROMPT },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Run the human-voice verifier on this audio. Return JSON matching the schema.",
+              },
+              audioContent,
+            ],
+          },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: { name: "human_verifier", strict: true, schema: HUMAN_SCHEMA },
+        },
+      }) as Promise<{
+        humanScore: number;
+        notes: string;
+        biosignals: HumanBiosignal[];
+      }>,
     ]);
 
-    // Fuse specialist deepfake score with generalist AI-voice score (weighted).
+    // Ensemble fusion across three specialists.
     const specialistScore = clamp(deepfake.deepfakeScore);
     const generalistScore = clamp(parsed.aiVoiceScore);
-    const aiVoiceScore = Math.round(specialistScore * 0.65 + generalistScore * 0.35);
+    const humanScore = clamp(human.humanScore);
+    const humanAsAi = 100 - humanScore; // convert to AI-likelihood axis
+
+    // Weighted: specialist deepfake detector 50%, human verifier 30%, generalist 20%.
+    const aiVoiceScore = Math.round(
+      specialistScore * 0.5 + humanAsAi * 0.3 + generalistScore * 0.2,
+    );
     const fraudScore = clamp(parsed.fraudScore);
+
+    // Agreement / confidence: low variance across the three AI-axis scores => high confidence.
+    const axis = [specialistScore, humanAsAi, generalistScore];
+    const mean = axis.reduce((a, b) => a + b, 0) / axis.length;
+    const variance = axis.reduce((s, v) => s + (v - mean) ** 2, 0) / axis.length;
+    const stdev = Math.sqrt(variance);
+    const originConfidence = clamp(100 - stdev * 2);
+
+    let originLabel: VoiceOrigin["label"];
+    if (aiVoiceScore >= 60 && originConfidence >= 55) originLabel = "ai";
+    else if (aiVoiceScore <= 30 && originConfidence >= 55) originLabel = "human";
+    else originLabel = "uncertain";
 
     let verdict: DetectionReport["verdict"] = "authentic";
     if (aiVoiceScore >= 65 && fraudScore >= 55) verdict = "likely_fraud";
@@ -411,6 +453,23 @@ export const analyzeVoice = createServerFn({ method: "POST" })
         segments,
         estimatedDuration: duration || (segments.at(-1)?.end ?? 0),
       },
+      humanVerifier: {
+        humanScore,
+        biosignals: human.biosignals ?? [],
+        notes: human.notes ?? "",
+      },
+      voiceOrigin: {
+        label: originLabel,
+        confidence: originConfidence,
+        aiScore: aiVoiceScore,
+        humanScore: 100 - aiVoiceScore,
+        agreement: {
+          generalistAi: generalistScore,
+          specialistDeepfake: specialistScore,
+          humanVerifier: humanScore,
+        },
+      },
+
 
       verdict,
       headline: parsed.headline ?? defaultHeadline(verdict),
