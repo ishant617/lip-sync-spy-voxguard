@@ -26,6 +26,7 @@ import {
   type Finding,
   type Severity,
 } from "@/lib/fraud-detection.functions";
+import { SpectrogramCompare } from "@/components/SpectrogramCompare";
 
 export const Route = createFileRoute("/")({
   head: () => ({
