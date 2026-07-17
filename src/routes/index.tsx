@@ -12,6 +12,8 @@ import {
   Loader2,
   Waves,
   Brain,
+  Quote,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -20,6 +22,8 @@ import { Toaster } from "@/components/ui/sonner";
 import {
   analyzeVoice,
   type DetectionReport,
+  type Finding,
+  type Severity,
 } from "@/lib/fraud-detection.functions";
 
 export const Route = createFileRoute("/")({
@@ -224,15 +228,19 @@ function Home() {
           <section className="mt-10 space-y-6">
             <VerdictCard report={report} onReset={reset} />
 
+            <EvidenceCard evidence={report.supportingEvidence} />
+
             <div className="grid gap-6 md:grid-cols-2">
               <FindingsCard
                 icon={<Waves className="h-4 w-4" />}
                 title="Acoustic findings"
+                subtitle="How the voice sounds"
                 items={report.acousticFindings}
               />
               <FindingsCard
                 icon={<Brain className="h-4 w-4" />}
                 title="Linguistic findings"
+                subtitle="What was said"
                 items={report.linguisticFindings}
               />
             </div>
@@ -284,18 +292,35 @@ function VerdictCard({
   const style = verdictStyle(report.verdict);
   const Icon = style.icon;
   return (
-    <Card className={`border p-6 ${style.card}`}>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div className={`rounded-lg p-2 ${style.iconWrap}`}>
-            <Icon className="h-6 w-6" />
+    <Card className={`overflow-hidden border p-0 ${style.card}`}>
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/5 p-6">
+        <div className="flex items-start gap-4">
+          <div className={`rounded-xl p-3 ${style.iconWrap}`}>
+            <Icon className="h-7 w-7" />
           </div>
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Verdict
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Verdict
+              </span>
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${style.badge}`}
+              >
+                {style.label}
+              </span>
             </div>
-            <div className="text-2xl font-bold">{style.label}</div>
-            <p className="mt-2 max-w-xl text-sm text-slate-300">{report.reasoning}</p>
+            <h2 className="mt-1 text-2xl font-bold text-slate-50">
+              {report.headline}
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm text-slate-300">
+              {report.reasoning}
+            </p>
+            <div className="mt-3 text-xs text-slate-500">
+              Model confidence:{" "}
+              <span className="font-mono text-slate-300">
+                {report.confidence}%
+              </span>
+            </div>
           </div>
         </div>
         <Button variant="outline" onClick={onReset} className="border-white/20">
@@ -303,7 +328,7 @@ function VerdictCard({
         </Button>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-6 border-b border-white/5 p-6 sm:grid-cols-2">
         <ScoreBar
           label="AI / synthetic-voice likelihood"
           value={report.aiVoiceScore}
@@ -316,14 +341,15 @@ function VerdictCard({
         />
       </div>
 
-      <div className="mt-6">
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
+      <div className="p-6">
+        <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          <AlertTriangle className="h-3.5 w-3.5" />
           Recommended actions
         </div>
-        <ul className="space-y-1 text-sm text-slate-200">
+        <ul className="space-y-1.5 text-sm text-slate-200">
           {report.recommendedActions.map((a, i) => (
             <li key={i} className="flex gap-2">
-              <span className="text-emerald-400">›</span>
+              <span className="mt-0.5 text-emerald-400">›</span>
               {a}
             </li>
           ))}
@@ -344,20 +370,24 @@ function ScoreBar({
 }) {
   const color =
     value >= 65 ? "bg-rose-500" : value >= 40 ? "bg-amber-400" : "bg-emerald-500";
+  const risk = value >= 65 ? "High" : value >= 40 ? "Elevated" : "Low";
   return (
     <div>
-      <div className="mb-1 flex items-center justify-between text-xs text-slate-400">
+      <div className="mb-1.5 flex items-center justify-between text-xs text-slate-400">
         <span className="flex items-center gap-1.5">
           {icon}
           {label}
         </span>
         <span className="font-mono text-slate-200">{value}%</span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-white/10">
+      <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
         <div
           className={`h-full ${color} transition-all`}
           style={{ width: `${value}%` }}
         />
+      </div>
+      <div className="mt-1 text-[10px] uppercase tracking-wider text-slate-500">
+        {risk} risk
       </div>
     </div>
   );
@@ -366,29 +396,87 @@ function ScoreBar({
 function FindingsCard({
   icon,
   title,
+  subtitle,
   items,
 }: {
   icon: React.ReactNode;
   title: string;
-  items: string[];
+  subtitle: string;
+  items: Finding[];
 }) {
   return (
     <Card className="border-white/10 bg-white/[0.03] p-6">
-      <div className="mb-3 flex items-center gap-2 text-emerald-400">
+      <div className="mb-4 flex items-center gap-2 text-emerald-400">
         {icon}
-        <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
-          {title}
-        </h3>
+        <div>
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
+            {title}
+          </h3>
+          <p className="text-xs text-slate-500">{subtitle}</p>
+        </div>
       </div>
-      <ul className="space-y-2 text-sm text-slate-200">
+      <ul className="space-y-3">
         {items.map((f, i) => (
-          <li key={i} className="flex gap-2">
-            <span className="text-emerald-400">•</span>
-            {f}
+          <li
+            key={i}
+            className="rounded-lg border border-white/5 bg-white/[0.02] p-3"
+          >
+            <div className="mb-1 flex items-start justify-between gap-2">
+              <span className="text-sm font-medium text-slate-100">
+                {f.label}
+              </span>
+              <SeverityBadge severity={f.severity} />
+            </div>
+            <p className="text-xs leading-relaxed text-slate-400">{f.detail}</p>
           </li>
         ))}
       </ul>
     </Card>
+  );
+}
+
+function EvidenceCard({ evidence }: { evidence: DetectionReport["supportingEvidence"] }) {
+  if (!evidence.length) return null;
+  return (
+    <Card className="border-white/10 bg-white/[0.03] p-6">
+      <div className="mb-4 flex items-center gap-2 text-emerald-400">
+        <Quote className="h-4 w-4" />
+        <div>
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
+            Supporting evidence
+          </h3>
+          <p className="text-xs text-slate-500">
+            Specific observations backing the verdict
+          </p>
+        </div>
+      </div>
+      <ol className="space-y-3">
+        {evidence.map((e, i) => (
+          <li
+            key={i}
+            className="rounded-lg border-l-2 border-emerald-400/60 bg-white/[0.02] p-3 pl-4"
+          >
+            <p className="text-sm italic text-slate-100">&ldquo;{e.quote}&rdquo;</p>
+            <p className="mt-1 text-xs text-slate-400">{e.why}</p>
+          </li>
+        ))}
+      </ol>
+    </Card>
+  );
+}
+
+function SeverityBadge({ severity }: { severity: Severity }) {
+  const styles: Record<Severity, string> = {
+    low: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+    medium: "bg-amber-400/15 text-amber-300 border-amber-400/30",
+    high: "bg-rose-500/15 text-rose-300 border-rose-500/30",
+  };
+  return (
+    <span
+      className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${styles[severity]}`}
+    >
+      {severity}
+    </span>
   );
 }
 
@@ -417,6 +505,7 @@ function verdictStyle(v: DetectionReport["verdict"]) {
         label: "Likely fraud call",
         card: "border-rose-500/40 bg-rose-500/5",
         iconWrap: "bg-rose-500/15 text-rose-300",
+        badge: "bg-rose-500/20 text-rose-200 border border-rose-500/40",
         icon: ShieldAlert,
       };
     case "ai_synthesized":
@@ -424,6 +513,7 @@ function verdictStyle(v: DetectionReport["verdict"]) {
         label: "AI-synthesised voice",
         card: "border-purple-500/40 bg-purple-500/5",
         iconWrap: "bg-purple-500/15 text-purple-300",
+        badge: "bg-purple-500/20 text-purple-200 border border-purple-500/40",
         icon: Bot,
       };
     case "suspicious":
@@ -431,6 +521,7 @@ function verdictStyle(v: DetectionReport["verdict"]) {
         label: "Suspicious",
         card: "border-amber-400/40 bg-amber-400/5",
         iconWrap: "bg-amber-400/15 text-amber-300",
+        badge: "bg-amber-400/20 text-amber-200 border border-amber-400/40",
         icon: ShieldAlert,
       };
     default:
@@ -438,6 +529,7 @@ function verdictStyle(v: DetectionReport["verdict"]) {
         label: "Authentic voice",
         card: "border-emerald-500/40 bg-emerald-500/5",
         iconWrap: "bg-emerald-500/15 text-emerald-300",
+        badge: "bg-emerald-500/20 text-emerald-200 border border-emerald-500/40",
         icon: ShieldCheck,
       };
   }
