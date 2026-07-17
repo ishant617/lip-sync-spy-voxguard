@@ -232,6 +232,10 @@ function Home() {
 
             <EvidenceCard evidence={report.supportingEvidence} />
 
+            <SpectrogramCompare src={audioUrl} />
+
+
+
             <div className="grid gap-6 md:grid-cols-2">
               <FindingsCard
                 icon={<Waves className="h-4 w-4" />}
