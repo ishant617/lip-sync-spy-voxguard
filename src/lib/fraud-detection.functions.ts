@@ -29,34 +29,59 @@ export type DeepfakeArtifact = {
 };
 
 export type LocalizedSegment = {
-  start: number; // seconds
-  end: number; // seconds
-  score: number; // 0-100 synthetic probability for this segment
+  start: number;
+  end: number;
+  score: number;
   label: "human" | "suspicious" | "synthetic";
-  note: string; // short reason (e.g. "vocoder hiss", "natural breath")
+  note: string;
 };
 
 export type DeepfakeAnalysis = {
-  deepfakeScore: number; // 0-100 specialist model's synthetic likelihood
-  humanLikelihood: number; // 0-100
-  suspectedFamily: string; // e.g. "ElevenLabs-style neural TTS" / "Human speech"
-  vocoderFingerprint: string; // short technical description
+  deepfakeScore: number;
+  humanLikelihood: number;
+  suspectedFamily: string;
+  vocoderFingerprint: string;
   artifacts: DeepfakeArtifact[];
   modelNotes: string;
   segments: LocalizedSegment[];
-  estimatedDuration: number; // seconds, model's estimate of audio length
+  estimatedDuration: number;
 };
 
+export type HumanBiosignal = {
+  name: string;
+  present: boolean;
+  detail: string;
+};
+
+export type HumanVerifier = {
+  humanScore: number;
+  biosignals: HumanBiosignal[];
+  notes: string;
+};
+
+export type VoiceOrigin = {
+  label: "human" | "ai" | "uncertain";
+  confidence: number;
+  aiScore: number;
+  humanScore: number;
+  agreement: {
+    generalistAi: number;
+    specialistDeepfake: number;
+    humanVerifier: number;
+  };
+};
 
 export type DetectionReport = {
   transcript: string;
   aiVoiceScore: number;
   fraudScore: number;
-  confidence: number; // 0-100 model self-reported confidence in the verdict
+  confidence: number;
   acousticFindings: Finding[];
   linguisticFindings: Finding[];
   supportingEvidence: Evidence[];
   deepfakeAnalysis: DeepfakeAnalysis;
+  humanVerifier: HumanVerifier;
+  voiceOrigin: VoiceOrigin;
   verdict: "authentic" | "suspicious" | "likely_fraud" | "ai_synthesized";
   headline: string;
   reasoning: string;
@@ -214,6 +239,46 @@ const DEEPFAKE_SCHEMA = {
   ],
 } as const;
 
+const HUMAN_SYSTEM_PROMPT = `You are a specialised HUMAN-VOICE verifier. Your ONLY job is to decide how confident you are that this audio is a REAL, un-processed human recording (not TTS, not voice-clone, not vocoded).
+
+Focus on POSITIVE human biosignals — features that neural TTS still struggles to reproduce naturally:
+- Natural breath intake before phrases and mid-sentence micro-inhales
+- Lip smacks, tongue clicks, saliva sounds
+- Pitch micro-jitter and shimmer (small random f0 variation across glottal cycles)
+- Non-uniform noise floor: real room tone with HVAC / traffic / mic-preamp hiss
+- Plosive bursts (p/b/t) with natural aspiration and mic pops
+- Vocal fry at phrase-ends, creaky voice, unstable pitch on long vowels
+- Emotional prosody that matches the words (not flat delivery on emotive content)
+- Consistent formant transitions with natural coarticulation smear
+
+For each biosignal set { name, present: true|false, detail } and return an overall humanScore (0-100) — HIGH means confidently human, LOW means confidently synthetic. Be calibrated: obvious real recording 75-100, obvious TTS 0-25, mixed/ambiguous in between.`;
+
+const HUMAN_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    humanScore: { type: "number" },
+    notes: { type: "string" },
+    biosignals: {
+      type: "array",
+      minItems: 3,
+      maxItems: 8,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          name: { type: "string" },
+          present: { type: "boolean" },
+          detail: { type: "string" },
+        },
+        required: ["name", "present", "detail"],
+      },
+    },
+  },
+  required: ["humanScore", "notes", "biosignals"],
+} as const;
+
+
 
 async function callGateway(apiKey: string, body: unknown) {
   const res = await fetch(GATEWAY_URL, {
@@ -240,7 +305,7 @@ export const analyzeVoice = createServerFn({ method: "POST" })
       input_audio: { data: data.audioBase64, format: data.format },
     };
 
-    const [parsed, deepfake] = await Promise.all([
+    const [parsed, deepfake, human] = await Promise.all([
       callGateway(apiKey, {
         model: MODEL,
         messages: [
@@ -300,13 +365,55 @@ export const analyzeVoice = createServerFn({ method: "POST" })
         segments: LocalizedSegment[];
         estimatedDuration: number;
       }>,
+      callGateway(apiKey, {
+        model: MODEL,
+        messages: [
+          { role: "system", content: HUMAN_SYSTEM_PROMPT },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Run the human-voice verifier on this audio. Return JSON matching the schema.",
+              },
+              audioContent,
+            ],
+          },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: { name: "human_verifier", strict: true, schema: HUMAN_SCHEMA },
+        },
+      }) as Promise<{
+        humanScore: number;
+        notes: string;
+        biosignals: HumanBiosignal[];
+      }>,
     ]);
 
-    // Fuse specialist deepfake score with generalist AI-voice score (weighted).
+    // Ensemble fusion across three specialists.
     const specialistScore = clamp(deepfake.deepfakeScore);
     const generalistScore = clamp(parsed.aiVoiceScore);
-    const aiVoiceScore = Math.round(specialistScore * 0.65 + generalistScore * 0.35);
+    const humanScore = clamp(human.humanScore);
+    const humanAsAi = 100 - humanScore; // convert to AI-likelihood axis
+
+    // Weighted: specialist deepfake detector 50%, human verifier 30%, generalist 20%.
+    const aiVoiceScore = Math.round(
+      specialistScore * 0.5 + humanAsAi * 0.3 + generalistScore * 0.2,
+    );
     const fraudScore = clamp(parsed.fraudScore);
+
+    // Agreement / confidence: low variance across the three AI-axis scores => high confidence.
+    const axis = [specialistScore, humanAsAi, generalistScore];
+    const mean = axis.reduce((a, b) => a + b, 0) / axis.length;
+    const variance = axis.reduce((s, v) => s + (v - mean) ** 2, 0) / axis.length;
+    const stdev = Math.sqrt(variance);
+    const originConfidence = clamp(100 - stdev * 2);
+
+    let originLabel: VoiceOrigin["label"];
+    if (aiVoiceScore >= 60 && originConfidence >= 55) originLabel = "ai";
+    else if (aiVoiceScore <= 30 && originConfidence >= 55) originLabel = "human";
+    else originLabel = "uncertain";
 
     let verdict: DetectionReport["verdict"] = "authentic";
     if (aiVoiceScore >= 65 && fraudScore >= 55) verdict = "likely_fraud";
@@ -346,6 +453,23 @@ export const analyzeVoice = createServerFn({ method: "POST" })
         segments,
         estimatedDuration: duration || (segments.at(-1)?.end ?? 0),
       },
+      humanVerifier: {
+        humanScore,
+        biosignals: human.biosignals ?? [],
+        notes: human.notes ?? "",
+      },
+      voiceOrigin: {
+        label: originLabel,
+        confidence: originConfidence,
+        aiScore: aiVoiceScore,
+        humanScore: 100 - aiVoiceScore,
+        agreement: {
+          generalistAi: generalistScore,
+          specialistDeepfake: specialistScore,
+          humanVerifier: humanScore,
+        },
+      },
+
 
       verdict,
       headline: parsed.headline ?? defaultHeadline(verdict),

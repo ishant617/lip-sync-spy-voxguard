@@ -28,9 +28,12 @@ import {
   type DeepfakeAnalysis,
   type Finding,
   type Severity,
+  type HumanVerifier,
+  type VoiceOrigin,
 } from "@/lib/fraud-detection.functions";
 import { SpectrogramCompare } from "@/components/SpectrogramCompare";
 import { DeepfakeLocalization } from "@/components/DeepfakeLocalization";
+import { User, CheckCircle2, XCircle, HelpCircle } from "lucide-react";
 
 
 
@@ -235,6 +238,8 @@ function Home() {
         {report && (
           <section className="mt-10 space-y-6">
             <VerdictCard report={report} onReset={reset} />
+
+            <VoiceOriginCard origin={report.voiceOrigin} human={report.humanVerifier} />
 
             <DeepfakeSpecialistCard analysis={report.deepfakeAnalysis} />
 
@@ -488,6 +493,164 @@ function EvidenceCard({ evidence }: { evidence: DetectionReport["supportingEvide
     </Card>
   );
 }
+
+function VoiceOriginCard({
+  origin,
+  human,
+}: {
+  origin: VoiceOrigin;
+  human: HumanVerifier;
+}) {
+  const style =
+    origin.label === "ai"
+      ? {
+          Icon: Bot,
+          label: "AI-generated voice",
+          card: "border-purple-500/40 bg-purple-500/5",
+          iconWrap: "bg-purple-500/15 text-purple-300",
+          badge: "border-purple-500/40 bg-purple-500/15 text-purple-200",
+        }
+      : origin.label === "human"
+        ? {
+            Icon: User,
+            label: "Human voice",
+            card: "border-emerald-500/40 bg-emerald-500/5",
+            iconWrap: "bg-emerald-500/15 text-emerald-300",
+            badge: "border-emerald-500/40 bg-emerald-500/15 text-emerald-200",
+          }
+        : {
+            Icon: HelpCircle,
+            label: "Uncertain — models disagree",
+            card: "border-amber-400/40 bg-amber-400/5",
+            iconWrap: "bg-amber-400/15 text-amber-300",
+            badge: "border-amber-400/40 bg-amber-400/15 text-amber-200",
+          };
+  const Icon = style.Icon;
+
+  return (
+    <Card className={`overflow-hidden border p-0 ${style.card}`}>
+      <div className="flex flex-wrap items-start justify-between gap-4 p-6">
+        <div className="flex items-start gap-4">
+          <div className={`rounded-xl p-3 ${style.iconWrap}`}>
+            <Icon className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Voice origin
+              </span>
+              <span
+                className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${style.badge}`}
+              >
+                Ensemble
+              </span>
+            </div>
+            <h3 className="mt-1 text-xl font-bold text-slate-50">{style.label}</h3>
+            <p className="mt-1 text-xs text-slate-400">
+              Ensemble confidence:{" "}
+              <span className="font-mono text-slate-200">{origin.confidence}%</span> ·
+              fused from 3 specialist passes
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 border-t border-white/5 p-6 sm:grid-cols-2">
+        <div>
+          <div className="mb-1.5 flex items-center justify-between text-xs text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <User className="h-4 w-4" /> Human likelihood
+            </span>
+            <span className="font-mono text-slate-200">{origin.humanScore}%</span>
+          </div>
+          <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full bg-emerald-500 transition-all"
+              style={{ width: `${origin.humanScore}%` }}
+            />
+          </div>
+        </div>
+        <div>
+          <div className="mb-1.5 flex items-center justify-between text-xs text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <Bot className="h-4 w-4" /> AI-voice likelihood
+            </span>
+            <span className="font-mono text-slate-200">{origin.aiScore}%</span>
+          </div>
+          <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full bg-purple-500 transition-all"
+              style={{ width: `${origin.aiScore}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-white/5 p-6">
+        <div className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          Model agreement (AI-likelihood axis, lower = more human)
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <AgreementPill label="Generalist" value={origin.agreement.generalistAi} />
+          <AgreementPill
+            label="Deepfake specialist"
+            value={origin.agreement.specialistDeepfake}
+          />
+          <AgreementPill
+            label="Human verifier"
+            value={100 - origin.agreement.humanVerifier}
+          />
+        </div>
+      </div>
+
+      {human.biosignals.length > 0 && (
+        <div className="border-t border-white/5 p-6">
+          <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <User className="h-3.5 w-3.5" /> Human biosignals
+          </div>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {human.biosignals.map((b, i) => (
+              <li
+                key={i}
+                className="flex items-start gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-3"
+              >
+                {b.present ? (
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                ) : (
+                  <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
+                )}
+                <div>
+                  <div className="text-sm font-medium text-slate-100">{b.name}</div>
+                  <div className="text-xs text-slate-400">{b.detail}</div>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {human.notes && (
+            <p className="mt-3 text-xs leading-relaxed text-slate-400">{human.notes}</p>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function AgreementPill({ label, value }: { label: string; value: number }) {
+  const color =
+    value >= 65 ? "bg-rose-500" : value >= 40 ? "bg-amber-400" : "bg-emerald-500";
+  return (
+    <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
+      <div className="mb-1 flex items-center justify-between text-[11px] text-slate-400">
+        <span>{label}</span>
+        <span className="font-mono text-slate-200">{value}%</span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+        <div className={`h-full ${color}`} style={{ width: `${value}%` }} />
+      </div>
+    </div>
+  );
+}
+
 function DeepfakeSpecialistCard({ analysis }: { analysis: DeepfakeAnalysis }) {
   const score = analysis.deepfakeScore;
   const tone =
