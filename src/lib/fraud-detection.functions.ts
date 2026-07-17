@@ -29,34 +29,59 @@ export type DeepfakeArtifact = {
 };
 
 export type LocalizedSegment = {
-  start: number; // seconds
-  end: number; // seconds
-  score: number; // 0-100 synthetic probability for this segment
+  start: number;
+  end: number;
+  score: number;
   label: "human" | "suspicious" | "synthetic";
-  note: string; // short reason (e.g. "vocoder hiss", "natural breath")
+  note: string;
 };
 
 export type DeepfakeAnalysis = {
-  deepfakeScore: number; // 0-100 specialist model's synthetic likelihood
-  humanLikelihood: number; // 0-100
-  suspectedFamily: string; // e.g. "ElevenLabs-style neural TTS" / "Human speech"
-  vocoderFingerprint: string; // short technical description
+  deepfakeScore: number;
+  humanLikelihood: number;
+  suspectedFamily: string;
+  vocoderFingerprint: string;
   artifacts: DeepfakeArtifact[];
   modelNotes: string;
   segments: LocalizedSegment[];
-  estimatedDuration: number; // seconds, model's estimate of audio length
+  estimatedDuration: number;
 };
 
+export type HumanBiosignal = {
+  name: string;
+  present: boolean;
+  detail: string;
+};
+
+export type HumanVerifier = {
+  humanScore: number;
+  biosignals: HumanBiosignal[];
+  notes: string;
+};
+
+export type VoiceOrigin = {
+  label: "human" | "ai" | "uncertain";
+  confidence: number;
+  aiScore: number;
+  humanScore: number;
+  agreement: {
+    generalistAi: number;
+    specialistDeepfake: number;
+    humanVerifier: number;
+  };
+};
 
 export type DetectionReport = {
   transcript: string;
   aiVoiceScore: number;
   fraudScore: number;
-  confidence: number; // 0-100 model self-reported confidence in the verdict
+  confidence: number;
   acousticFindings: Finding[];
   linguisticFindings: Finding[];
   supportingEvidence: Evidence[];
   deepfakeAnalysis: DeepfakeAnalysis;
+  humanVerifier: HumanVerifier;
+  voiceOrigin: VoiceOrigin;
   verdict: "authentic" | "suspicious" | "likely_fraud" | "ai_synthesized";
   headline: string;
   reasoning: string;
