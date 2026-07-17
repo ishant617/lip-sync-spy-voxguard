@@ -239,6 +239,8 @@ function Home() {
           <section className="mt-10 space-y-6">
             <VerdictCard report={report} onReset={reset} />
 
+            <VoiceOriginCard origin={report.voiceOrigin} human={report.humanVerifier} />
+
             <DeepfakeSpecialistCard analysis={report.deepfakeAnalysis} />
 
             <DeepfakeLocalization
