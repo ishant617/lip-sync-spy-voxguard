@@ -238,6 +238,13 @@ function Home() {
 
             <DeepfakeSpecialistCard analysis={report.deepfakeAnalysis} />
 
+            <DeepfakeLocalization
+              segments={report.deepfakeAnalysis.segments}
+              estimatedDuration={report.deepfakeAnalysis.estimatedDuration}
+              audioSrc={audioUrl}
+            />
+
+
             <EvidenceCard evidence={report.supportingEvidence} />
 
             <SpectrogramCompare src={audioUrl} />
