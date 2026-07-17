@@ -12,6 +12,8 @@ import {
   Loader2,
   Waves,
   Brain,
+  Quote,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -20,6 +22,8 @@ import { Toaster } from "@/components/ui/sonner";
 import {
   analyzeVoice,
   type DetectionReport,
+  type Finding,
+  type Severity,
 } from "@/lib/fraud-detection.functions";
 
 export const Route = createFileRoute("/")({
