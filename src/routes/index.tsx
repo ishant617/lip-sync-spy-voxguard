@@ -14,6 +14,8 @@ import {
   Brain,
   Quote,
   AlertTriangle,
+  Cpu,
+  Fingerprint,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AudioWaveform } from "@/components/AudioWaveform";
@@ -23,10 +25,12 @@ import { Toaster } from "@/components/ui/sonner";
 import {
   analyzeVoice,
   type DetectionReport,
+  type DeepfakeAnalysis,
   type Finding,
   type Severity,
 } from "@/lib/fraud-detection.functions";
 import { SpectrogramCompare } from "@/components/SpectrogramCompare";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
