@@ -28,6 +28,14 @@ export type DeepfakeArtifact = {
   severity: Severity;
 };
 
+export type LocalizedSegment = {
+  start: number; // seconds
+  end: number; // seconds
+  score: number; // 0-100 synthetic probability for this segment
+  label: "human" | "suspicious" | "synthetic";
+  note: string; // short reason (e.g. "vocoder hiss", "natural breath")
+};
+
 export type DeepfakeAnalysis = {
   deepfakeScore: number; // 0-100 specialist model's synthetic likelihood
   humanLikelihood: number; // 0-100
@@ -35,7 +43,10 @@ export type DeepfakeAnalysis = {
   vocoderFingerprint: string; // short technical description
   artifacts: DeepfakeArtifact[];
   modelNotes: string;
+  segments: LocalizedSegment[];
+  estimatedDuration: number; // seconds, model's estimate of audio length
 };
+
 
 export type DetectionReport = {
   transcript: string;
