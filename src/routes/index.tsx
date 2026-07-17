@@ -16,6 +16,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AudioWaveform } from "@/components/AudioWaveform";
 import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import { Toaster } from "@/components/ui/sonner";
@@ -236,6 +237,13 @@ function Home() {
                 title="Acoustic findings"
                 subtitle="How the voice sounds"
                 items={report.acousticFindings}
+                extra={audioUrl ? <AudioWaveform src={audioUrl} /> : null}
+              />
+              <FindingsCard
+                icon={<Brain className="h-4 w-4" />}
+                title="Linguistic findings"
+                subtitle="What was said"
+                items={report.linguisticFindings}
               />
               <FindingsCard
                 icon={<Brain className="h-4 w-4" />}
@@ -398,11 +406,13 @@ function FindingsCard({
   title,
   subtitle,
   items,
+  extra,
 }: {
   icon: React.ReactNode;
   title: string;
   subtitle: string;
   items: Finding[];
+  extra?: React.ReactNode;
 }) {
   return (
     <Card className="border-white/10 bg-white/[0.03] p-6">
@@ -415,6 +425,7 @@ function FindingsCard({
           <p className="text-xs text-slate-500">{subtitle}</p>
         </div>
       </div>
+      {extra}
       <ul className="space-y-3">
         {items.map((f, i) => (
           <li
