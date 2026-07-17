@@ -77,14 +77,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "VoxGuard — AI Voice & Fraud Detection" },
+      {
+        name: "description",
+        content:
+          "Loop-engineered detection of AI-cloned voices and voice-fraud calls.",
+      },
+      { property: "og:title", content: "VoxGuard — AI Voice & Fraud Detection" },
+      {
+        property: "og:description",
+        content:
+          "Loop-engineered detection of AI-cloned voices and voice-fraud calls.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
