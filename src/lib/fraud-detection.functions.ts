@@ -9,13 +9,29 @@ const InputSchema = z.object({
   format: z.enum(["webm", "mp3", "wav", "m4a", "ogg", "aac", "flac"]),
 });
 
+export type Severity = "low" | "medium" | "high";
+
+export type Finding = {
+  label: string;
+  detail: string;
+  severity: Severity;
+};
+
+export type Evidence = {
+  quote: string;
+  why: string;
+};
+
 export type DetectionReport = {
   transcript: string;
   aiVoiceScore: number;
   fraudScore: number;
-  acousticFindings: string[];
-  linguisticFindings: string[];
+  confidence: number; // 0-100 model self-reported confidence in the verdict
+  acousticFindings: Finding[];
+  linguisticFindings: Finding[];
+  supportingEvidence: Evidence[];
   verdict: "authentic" | "suspicious" | "likely_fraud" | "ai_synthesized";
+  headline: string;
   reasoning: string;
   recommendedActions: string[];
 };
@@ -35,7 +51,20 @@ Look for TWO things simultaneously:
    - Requests for OTP, gift-cards, wire transfers, remote access
    - Emotional manipulation
 
-Be calibrated: authentic human speech about normal topics should score low on both.`;
+For every finding, tag a severity: "low" (weak signal), "medium" (notable), "high" (strong red flag).
+Extract 2-4 supportingEvidence items: short direct quotes from the audio OR concrete acoustic observations, each with a one-sentence "why" it matters.
+Be calibrated: authentic human speech about normal topics should score low on both, with low severity findings and low confidence in a fraud verdict.`;
+
+const FINDING_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    label: { type: "string" },
+    detail: { type: "string" },
+    severity: { type: "string", enum: ["low", "medium", "high"] },
+  },
+  required: ["label", "detail", "severity"],
+} as const;
 
 const RESPONSE_SCHEMA = {
   type: "object",
@@ -44,17 +73,46 @@ const RESPONSE_SCHEMA = {
     transcript: { type: "string" },
     aiVoiceScore: { type: "number" },
     fraudScore: { type: "number" },
-    acousticFindings: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 5 },
-    linguisticFindings: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 5 },
+    confidence: { type: "number" },
+    headline: { type: "string" },
     reasoning: { type: "string" },
+    acousticFindings: {
+      type: "array",
+      items: FINDING_SCHEMA,
+      minItems: 1,
+      maxItems: 5,
+    },
+    linguisticFindings: {
+      type: "array",
+      items: FINDING_SCHEMA,
+      minItems: 1,
+      maxItems: 5,
+    },
+    supportingEvidence: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          quote: { type: "string" },
+          why: { type: "string" },
+        },
+        required: ["quote", "why"],
+      },
+      minItems: 1,
+      maxItems: 5,
+    },
   },
   required: [
     "transcript",
     "aiVoiceScore",
     "fraudScore",
+    "confidence",
+    "headline",
+    "reasoning",
     "acousticFindings",
     "linguisticFindings",
-    "reasoning",
+    "supportingEvidence",
   ],
 } as const;
 
@@ -79,7 +137,7 @@ export const analyzeVoice = createServerFn({ method: "POST" })
             content: [
               {
                 type: "text",
-                text: "Analyse this audio and return JSON matching the schema. Include a best-effort transcript (empty string if no speech), acoustic and linguistic findings, and a short reasoning statement.",
+                text: "Analyse this audio and return JSON matching the schema. Provide a one-line headline, short reasoning, per-finding severity tags, and supporting evidence with quotes/observations.",
               },
               {
                 type: "input_audio",
@@ -107,9 +165,12 @@ export const analyzeVoice = createServerFn({ method: "POST" })
       transcript: string;
       aiVoiceScore: number;
       fraudScore: number;
-      acousticFindings: string[];
-      linguisticFindings: string[];
+      confidence: number;
+      headline: string;
       reasoning: string;
+      acousticFindings: Finding[];
+      linguisticFindings: Finding[];
+      supportingEvidence: Evidence[];
     };
 
     const aiVoiceScore = clamp(parsed.aiVoiceScore);
@@ -124,9 +185,12 @@ export const analyzeVoice = createServerFn({ method: "POST" })
       transcript: parsed.transcript ?? "",
       aiVoiceScore,
       fraudScore,
+      confidence: clamp(parsed.confidence),
       acousticFindings: parsed.acousticFindings ?? [],
       linguisticFindings: parsed.linguisticFindings ?? [],
+      supportingEvidence: parsed.supportingEvidence ?? [],
       verdict,
+      headline: parsed.headline ?? defaultHeadline(verdict),
       reasoning: parsed.reasoning ?? "",
       recommendedActions: buildActions(verdict),
     };
@@ -135,6 +199,19 @@ export const analyzeVoice = createServerFn({ method: "POST" })
 function clamp(n: number) {
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+function defaultHeadline(v: DetectionReport["verdict"]) {
+  switch (v) {
+    case "likely_fraud":
+      return "Likely voice-fraud call detected";
+    case "ai_synthesized":
+      return "Voice appears AI-synthesised";
+    case "suspicious":
+      return "Suspicious signals detected";
+    default:
+      return "No strong fraud or synthesis indicators";
+  }
 }
 
 function buildActions(v: DetectionReport["verdict"]): string[] {
