@@ -26,6 +26,7 @@ import {
   type Finding,
   type Severity,
 } from "@/lib/fraud-detection.functions";
+import { SpectrogramCompare } from "@/components/SpectrogramCompare";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -230,6 +231,10 @@ function Home() {
             <VerdictCard report={report} onReset={reset} />
 
             <EvidenceCard evidence={report.supportingEvidence} />
+
+            <SpectrogramCompare src={audioUrl} />
+
+
 
             <div className="grid gap-6 md:grid-cols-2">
               <FindingsCard
