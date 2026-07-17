@@ -14,6 +14,8 @@ import {
   Brain,
   Quote,
   AlertTriangle,
+  Cpu,
+  Fingerprint,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AudioWaveform } from "@/components/AudioWaveform";
@@ -23,10 +25,12 @@ import { Toaster } from "@/components/ui/sonner";
 import {
   analyzeVoice,
   type DetectionReport,
+  type DeepfakeAnalysis,
   type Finding,
   type Severity,
 } from "@/lib/fraud-detection.functions";
 import { SpectrogramCompare } from "@/components/SpectrogramCompare";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -230,11 +234,11 @@ function Home() {
           <section className="mt-10 space-y-6">
             <VerdictCard report={report} onReset={reset} />
 
+            <DeepfakeSpecialistCard analysis={report.deepfakeAnalysis} />
+
             <EvidenceCard evidence={report.supportingEvidence} />
 
             <SpectrogramCompare src={audioUrl} />
-
-
 
             <div className="grid gap-6 md:grid-cols-2">
               <FindingsCard
@@ -243,12 +247,6 @@ function Home() {
                 subtitle="How the voice sounds"
                 items={report.acousticFindings}
                 extra={audioUrl ? <AudioWaveform src={audioUrl} /> : null}
-              />
-              <FindingsCard
-                icon={<Brain className="h-4 w-4" />}
-                title="Linguistic findings"
-                subtitle="What was said"
-                items={report.linguisticFindings}
               />
               <FindingsCard
                 icon={<Brain className="h-4 w-4" />}
@@ -270,6 +268,7 @@ function Home() {
             )}
           </section>
         )}
+
 
         <section id="how" className="mt-16">
           <h2 className="mb-6 text-2xl font-semibold">How VoxGuard works</h2>
@@ -480,6 +479,109 @@ function EvidenceCard({ evidence }: { evidence: DetectionReport["supportingEvide
     </Card>
   );
 }
+function DeepfakeSpecialistCard({ analysis }: { analysis: DeepfakeAnalysis }) {
+  const score = analysis.deepfakeScore;
+  const tone =
+    score >= 65
+      ? { bar: "bg-rose-500", chip: "text-rose-300 border-rose-500/40 bg-rose-500/10", risk: "High" }
+      : score >= 40
+        ? { bar: "bg-amber-400", chip: "text-amber-300 border-amber-400/40 bg-amber-400/10", risk: "Elevated" }
+        : { bar: "bg-emerald-500", chip: "text-emerald-300 border-emerald-500/40 bg-emerald-500/10", risk: "Low" };
+
+  return (
+    <Card className="border-white/10 bg-gradient-to-br from-purple-500/5 to-white/[0.02] p-6">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-purple-500/15 p-2 text-purple-300">
+            <Cpu className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
+                Deepfake specialist model
+              </h3>
+              <span className="rounded-full border border-purple-400/30 bg-purple-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-200">
+                Fine-tuned
+              </span>
+            </div>
+            <p className="text-xs text-slate-500">
+              Dedicated neural-TTS & voice-clone fingerprinting pass
+            </p>
+          </div>
+        </div>
+        <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${tone.chip}`}>
+          {tone.risk} synthetic risk
+        </span>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <div className="mb-1.5 flex items-center justify-between text-xs text-slate-400">
+            <span>Deepfake score</span>
+            <span className="font-mono text-slate-200">{score}%</span>
+          </div>
+          <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
+            <div className={`h-full ${tone.bar} transition-all`} style={{ width: `${score}%` }} />
+          </div>
+        </div>
+        <div>
+          <div className="mb-1.5 flex items-center justify-between text-xs text-slate-400">
+            <span>Human likelihood</span>
+            <span className="font-mono text-slate-200">{analysis.humanLikelihood}%</span>
+          </div>
+          <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full bg-sky-400 transition-all"
+              style={{ width: `${analysis.humanLikelihood}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
+          <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            <Bot className="h-3 w-3" /> Suspected family
+          </div>
+          <div className="text-sm text-slate-100">{analysis.suspectedFamily}</div>
+        </div>
+        <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
+          <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            <Fingerprint className="h-3 w-3" /> Vocoder fingerprint
+          </div>
+          <div className="text-sm text-slate-100">{analysis.vocoderFingerprint || "—"}</div>
+        </div>
+      </div>
+
+      {analysis.modelNotes && (
+        <p className="mt-4 text-xs leading-relaxed text-slate-400">{analysis.modelNotes}</p>
+      )}
+
+      {analysis.artifacts.length > 0 && (
+        <div className="mt-5">
+          <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            Detected artifacts
+          </div>
+          <ul className="space-y-2">
+            {analysis.artifacts.map((a, i) => (
+              <li
+                key={i}
+                className="rounded-lg border border-white/5 bg-white/[0.02] p-3"
+              >
+                <div className="mb-1 flex items-start justify-between gap-2">
+                  <span className="text-sm font-medium text-slate-100">{a.name}</span>
+                  <SeverityBadge severity={a.severity} />
+                </div>
+                <p className="text-xs leading-relaxed text-slate-400">{a.detail}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 
 function SeverityBadge({ severity }: { severity: Severity }) {
   const styles: Record<Severity, string> = {
