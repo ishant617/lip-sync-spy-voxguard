@@ -30,6 +30,8 @@ import {
   type Severity,
 } from "@/lib/fraud-detection.functions";
 import { SpectrogramCompare } from "@/components/SpectrogramCompare";
+import { DeepfakeLocalization } from "@/components/DeepfakeLocalization";
+
 
 
 export const Route = createFileRoute("/")({
