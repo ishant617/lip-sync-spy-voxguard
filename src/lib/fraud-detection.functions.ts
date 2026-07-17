@@ -297,6 +297,8 @@ export const analyzeVoice = createServerFn({ method: "POST" })
         vocoderFingerprint: string;
         modelNotes: string;
         artifacts: DeepfakeArtifact[];
+        segments: LocalizedSegment[];
+        estimatedDuration: number;
       }>,
     ]);
 
@@ -310,6 +312,21 @@ export const analyzeVoice = createServerFn({ method: "POST" })
     if (aiVoiceScore >= 65 && fraudScore >= 55) verdict = "likely_fraud";
     else if (aiVoiceScore >= 65) verdict = "ai_synthesized";
     else if (fraudScore >= 55 || aiVoiceScore >= 45) verdict = "suspicious";
+
+    const rawSegments = Array.isArray(deepfake.segments) ? deepfake.segments : [];
+    const duration = Math.max(
+      0,
+      Number.isFinite(deepfake.estimatedDuration) ? deepfake.estimatedDuration : 0,
+    );
+    const segments: LocalizedSegment[] = rawSegments
+      .filter((s) => Number.isFinite(s.start) && Number.isFinite(s.end) && s.end > s.start)
+      .map((s) => ({
+        start: Math.max(0, s.start),
+        end: Math.max(s.start + 0.01, s.end),
+        score: clamp(s.score),
+        label: s.label ?? (clamp(s.score) >= 65 ? "synthetic" : clamp(s.score) >= 40 ? "suspicious" : "human"),
+        note: s.note ?? "",
+      }));
 
     return {
       transcript: parsed.transcript ?? "",
@@ -326,7 +343,10 @@ export const analyzeVoice = createServerFn({ method: "POST" })
         vocoderFingerprint: deepfake.vocoderFingerprint ?? "",
         modelNotes: deepfake.modelNotes ?? "",
         artifacts: deepfake.artifacts ?? [],
+        segments,
+        estimatedDuration: duration || (segments.at(-1)?.end ?? 0),
       },
+
       verdict,
       headline: parsed.headline ?? defaultHeadline(verdict),
       reasoning: parsed.reasoning ?? "",
