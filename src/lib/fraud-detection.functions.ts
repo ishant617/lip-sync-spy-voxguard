@@ -28,6 +28,14 @@ export type DeepfakeArtifact = {
   severity: Severity;
 };
 
+export type LocalizedSegment = {
+  start: number; // seconds
+  end: number; // seconds
+  score: number; // 0-100 synthetic probability for this segment
+  label: "human" | "suspicious" | "synthetic";
+  note: string; // short reason (e.g. "vocoder hiss", "natural breath")
+};
+
 export type DeepfakeAnalysis = {
   deepfakeScore: number; // 0-100 specialist model's synthetic likelihood
   humanLikelihood: number; // 0-100
@@ -35,7 +43,10 @@ export type DeepfakeAnalysis = {
   vocoderFingerprint: string; // short technical description
   artifacts: DeepfakeArtifact[];
   modelNotes: string;
+  segments: LocalizedSegment[];
+  estimatedDuration: number; // seconds, model's estimate of audio length
 };
+
 
 export type DetectionReport = {
   transcript: string;
@@ -148,6 +159,12 @@ Look for these fingerprints:
 - Room-tone / noise floor that doesn't match a real recording chain
 - Formant transitions too clean between phonemes
 
+DEEPFAKE LOCALIZATION — critically important:
+Break the audio into 4-10 consecutive, non-overlapping segments covering the FULL clip from 0s to the estimated end.
+For each segment set { start, end } in seconds, a per-segment synthetic-probability score (0-100), a label ("human" | "suspicious" | "synthetic"), and a short note describing the strongest local cue (e.g. "vocoder hiss on sibilants", "natural inhale", "flat pitch contour").
+Also return estimatedDuration in seconds for the whole clip. Segments MUST tile the clip (no gaps, no overlap, monotonically increasing).
+This locates WHERE in the audio the synthesis lives — partial deepfakes (a real caller spliced with a cloned phrase) must show mixed human + synthetic segments.
+
 Set suspectedFamily to a concrete guess (e.g. "ElevenLabs-style neural TTS", "Diffusion vocoder (Bark/XTTS)", "Concatenative TTS", "Human speech — no synthesis markers").
 Set vocoderFingerprint to a short technical phrase describing the strongest spectral clue.`;
 
@@ -160,11 +177,29 @@ const DEEPFAKE_SCHEMA = {
     suspectedFamily: { type: "string" },
     vocoderFingerprint: { type: "string" },
     modelNotes: { type: "string" },
+    estimatedDuration: { type: "number" },
     artifacts: {
       type: "array",
       items: FINDING_SCHEMA,
       minItems: 1,
       maxItems: 6,
+    },
+    segments: {
+      type: "array",
+      minItems: 2,
+      maxItems: 12,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          start: { type: "number" },
+          end: { type: "number" },
+          score: { type: "number" },
+          label: { type: "string", enum: ["human", "suspicious", "synthetic"] },
+          note: { type: "string" },
+        },
+        required: ["start", "end", "score", "label", "note"],
+      },
     },
   },
   required: [
@@ -174,8 +209,11 @@ const DEEPFAKE_SCHEMA = {
     "vocoderFingerprint",
     "modelNotes",
     "artifacts",
+    "segments",
+    "estimatedDuration",
   ],
 } as const;
+
 
 async function callGateway(apiKey: string, body: unknown) {
   const res = await fetch(GATEWAY_URL, {
@@ -259,6 +297,8 @@ export const analyzeVoice = createServerFn({ method: "POST" })
         vocoderFingerprint: string;
         modelNotes: string;
         artifacts: DeepfakeArtifact[];
+        segments: LocalizedSegment[];
+        estimatedDuration: number;
       }>,
     ]);
 
@@ -272,6 +312,21 @@ export const analyzeVoice = createServerFn({ method: "POST" })
     if (aiVoiceScore >= 65 && fraudScore >= 55) verdict = "likely_fraud";
     else if (aiVoiceScore >= 65) verdict = "ai_synthesized";
     else if (fraudScore >= 55 || aiVoiceScore >= 45) verdict = "suspicious";
+
+    const rawSegments = Array.isArray(deepfake.segments) ? deepfake.segments : [];
+    const duration = Math.max(
+      0,
+      Number.isFinite(deepfake.estimatedDuration) ? deepfake.estimatedDuration : 0,
+    );
+    const segments: LocalizedSegment[] = rawSegments
+      .filter((s) => Number.isFinite(s.start) && Number.isFinite(s.end) && s.end > s.start)
+      .map((s) => ({
+        start: Math.max(0, s.start),
+        end: Math.max(s.start + 0.01, s.end),
+        score: clamp(s.score),
+        label: s.label ?? (clamp(s.score) >= 65 ? "synthetic" : clamp(s.score) >= 40 ? "suspicious" : "human"),
+        note: s.note ?? "",
+      }));
 
     return {
       transcript: parsed.transcript ?? "",
@@ -288,7 +343,10 @@ export const analyzeVoice = createServerFn({ method: "POST" })
         vocoderFingerprint: deepfake.vocoderFingerprint ?? "",
         modelNotes: deepfake.modelNotes ?? "",
         artifacts: deepfake.artifacts ?? [],
+        segments,
+        estimatedDuration: duration || (segments.at(-1)?.end ?? 0),
       },
+
       verdict,
       headline: parsed.headline ?? defaultHeadline(verdict),
       reasoning: parsed.reasoning ?? "",

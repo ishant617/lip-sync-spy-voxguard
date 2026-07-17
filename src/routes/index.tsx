@@ -30,6 +30,8 @@ import {
   type Severity,
 } from "@/lib/fraud-detection.functions";
 import { SpectrogramCompare } from "@/components/SpectrogramCompare";
+import { DeepfakeLocalization } from "@/components/DeepfakeLocalization";
+
 
 
 export const Route = createFileRoute("/")({
@@ -235,6 +237,13 @@ function Home() {
             <VerdictCard report={report} onReset={reset} />
 
             <DeepfakeSpecialistCard analysis={report.deepfakeAnalysis} />
+
+            <DeepfakeLocalization
+              segments={report.deepfakeAnalysis.segments}
+              estimatedDuration={report.deepfakeAnalysis.estimatedDuration}
+              audioSrc={audioUrl}
+            />
+
 
             <EvidenceCard evidence={report.supportingEvidence} />
 
