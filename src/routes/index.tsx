@@ -505,6 +505,7 @@ function verdictStyle(v: DetectionReport["verdict"]) {
         label: "Likely fraud call",
         card: "border-rose-500/40 bg-rose-500/5",
         iconWrap: "bg-rose-500/15 text-rose-300",
+        badge: "bg-rose-500/20 text-rose-200 border border-rose-500/40",
         icon: ShieldAlert,
       };
     case "ai_synthesized":
@@ -512,6 +513,7 @@ function verdictStyle(v: DetectionReport["verdict"]) {
         label: "AI-synthesised voice",
         card: "border-purple-500/40 bg-purple-500/5",
         iconWrap: "bg-purple-500/15 text-purple-300",
+        badge: "bg-purple-500/20 text-purple-200 border border-purple-500/40",
         icon: Bot,
       };
     case "suspicious":
@@ -519,6 +521,7 @@ function verdictStyle(v: DetectionReport["verdict"]) {
         label: "Suspicious",
         card: "border-amber-400/40 bg-amber-400/5",
         iconWrap: "bg-amber-400/15 text-amber-300",
+        badge: "bg-amber-400/20 text-amber-200 border border-amber-400/40",
         icon: ShieldAlert,
       };
     default:
@@ -526,6 +529,7 @@ function verdictStyle(v: DetectionReport["verdict"]) {
         label: "Authentic voice",
         card: "border-emerald-500/40 bg-emerald-500/5",
         iconWrap: "bg-emerald-500/15 text-emerald-300",
+        badge: "bg-emerald-500/20 text-emerald-200 border border-emerald-500/40",
         icon: ShieldCheck,
       };
   }
