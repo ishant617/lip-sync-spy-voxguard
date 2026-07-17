@@ -239,6 +239,46 @@ const DEEPFAKE_SCHEMA = {
   ],
 } as const;
 
+const HUMAN_SYSTEM_PROMPT = `You are a specialised HUMAN-VOICE verifier. Your ONLY job is to decide how confident you are that this audio is a REAL, un-processed human recording (not TTS, not voice-clone, not vocoded).
+
+Focus on POSITIVE human biosignals — features that neural TTS still struggles to reproduce naturally:
+- Natural breath intake before phrases and mid-sentence micro-inhales
+- Lip smacks, tongue clicks, saliva sounds
+- Pitch micro-jitter and shimmer (small random f0 variation across glottal cycles)
+- Non-uniform noise floor: real room tone with HVAC / traffic / mic-preamp hiss
+- Plosive bursts (p/b/t) with natural aspiration and mic pops
+- Vocal fry at phrase-ends, creaky voice, unstable pitch on long vowels
+- Emotional prosody that matches the words (not flat delivery on emotive content)
+- Consistent formant transitions with natural coarticulation smear
+
+For each biosignal set { name, present: true|false, detail } and return an overall humanScore (0-100) — HIGH means confidently human, LOW means confidently synthetic. Be calibrated: obvious real recording 75-100, obvious TTS 0-25, mixed/ambiguous in between.`;
+
+const HUMAN_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    humanScore: { type: "number" },
+    notes: { type: "string" },
+    biosignals: {
+      type: "array",
+      minItems: 3,
+      maxItems: 8,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          name: { type: "string" },
+          present: { type: "boolean" },
+          detail: { type: "string" },
+        },
+        required: ["name", "present", "detail"],
+      },
+    },
+  },
+  required: ["humanScore", "notes", "biosignals"],
+} as const;
+
+
 
 async function callGateway(apiKey: string, body: unknown) {
   const res = await fetch(GATEWAY_URL, {
