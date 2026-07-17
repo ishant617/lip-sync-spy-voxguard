@@ -228,15 +228,19 @@ function Home() {
           <section className="mt-10 space-y-6">
             <VerdictCard report={report} onReset={reset} />
 
+            <EvidenceCard evidence={report.supportingEvidence} />
+
             <div className="grid gap-6 md:grid-cols-2">
               <FindingsCard
                 icon={<Waves className="h-4 w-4" />}
                 title="Acoustic findings"
+                subtitle="How the voice sounds"
                 items={report.acousticFindings}
               />
               <FindingsCard
                 icon={<Brain className="h-4 w-4" />}
                 title="Linguistic findings"
+                subtitle="What was said"
                 items={report.linguisticFindings}
               />
             </div>
