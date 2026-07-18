@@ -45,6 +45,7 @@ import {
   ThreatDashboard,
   saveHistoryEntry,
 } from "@/components/AdvancedFeatures";
+import { TwoFactorButton, TwoFactorModal } from "@/components/TwoFactorAuth";
 import { User, CheckCircle2, XCircle, HelpCircle, Radio } from "lucide-react";
 
 
