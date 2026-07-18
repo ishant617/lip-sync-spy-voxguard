@@ -437,7 +437,7 @@ function Home() {
               </button>
 
               <label
-                className={`group flex cursor-pointer items-center justify-center gap-3 rounded-md border border-cyan-400/30 bg-cyan-400/[0.03] px-6 py-8 text-left font-mono transition hover:border-cyan-300 hover:bg-cyan-400/10 hover:shadow-[0_0_24px_rgba(103,232,249,0.25)] focus-within:ring-2 focus-within:ring-cyan-300 focus-within:ring-offset-2 focus-within:ring-offset-black ${
+                className={`group flex cursor-pointer items-center justify-center gap-3 rounded-md border border-cyan-400/30 bg-cyan-400/[0.03] px-4 py-6 text-left font-mono transition hover:border-cyan-300 hover:bg-cyan-400/10 hover:shadow-[0_0_24px_rgba(103,232,249,0.25)] focus-within:ring-2 focus-within:ring-cyan-300 focus-within:ring-offset-2 focus-within:ring-offset-black sm:px-6 sm:py-8 ${
                   status === "analyzing" ? "pointer-events-none opacity-60" : ""
                 }`}
               >
