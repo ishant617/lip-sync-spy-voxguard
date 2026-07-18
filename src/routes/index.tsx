@@ -239,6 +239,10 @@ function Home() {
           )}
         </Card>
 
+        <div className="mt-6">
+          <SpeakerVerificationCard />
+        </div>
+
         {report && (
           <section className="mt-10 space-y-6">
             <VerdictCard report={report} onReset={reset} />
