@@ -217,6 +217,7 @@ function Home() {
     <div className="hacker-bg scanlines relative min-h-screen text-emerald-50">
       <div className="scanlines-overlay" />
       <Toaster theme="dark" />
+      <TwoFactorModal open={tfaOpen} onClose={() => setTfaOpen(false)} />
 
       {/* Top status bar */}
       <div className="relative z-10 border-b border-emerald-500/15 bg-black/40 backdrop-blur">
