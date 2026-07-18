@@ -1,6 +1,6 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   ShieldCheck,
@@ -71,8 +71,54 @@ function Home() {
   const [progress, setProgress] = useState(0);
   const [report, setReport] = useState<DetectionReport | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [feed, setFeed] = useState<Array<{ ts: string; msg: string; level: "info" | "warn" | "ok" }>>([]);
   const mediaRecRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+
+  useEffect(() => {
+    if (status !== "analyzing") return;
+    const pool: Array<{ msg: string; level: "info" | "warn" | "ok" }> = [
+      { msg: "loading acoustic feature extractor · mel-128", level: "info" },
+      { msg: "spawning generalist pass · gemini-3-flash", level: "info" },
+      { msg: "spawning deepfake specialist · neural-tts family classifier", level: "info" },
+      { msg: "probing vocoder fingerprints: elevenlabs / vall-e / xtts / tortoise", level: "info" },
+      { msg: "measuring pitch jitter & shimmer (biosignal check)", level: "info" },
+      { msg: "asvspoof-5 heuristics: replay · conversion · splice · channel", level: "info" },
+      { msg: "phase coherence scan · sample-rate: 48kHz", level: "info" },
+      { msg: "diffusion warble detector armed", level: "warn" },
+      { msg: "spectral roll-off delta computed", level: "ok" },
+      { msg: "harmonic stack integrity check", level: "ok" },
+      { msg: "breath / plosive / lip-smack detector online", level: "info" },
+      { msg: "cross-checking prosody vs neural-TTS reference bank", level: "warn" },
+      { msg: "fusing ensemble · logistic calibration", level: "ok" },
+      { msg: "computing per-model agreement matrix", level: "info" },
+      { msg: "tiling clip into localization segments", level: "info" },
+      { msg: "packet integrity verified · e2e-encrypted uplink", level: "ok" },
+    ];
+    let i = 0;
+    const push = () => {
+      const item = pool[i % pool.length];
+      i++;
+      const d = new Date();
+      const ts = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}.${String(d.getMilliseconds()).padStart(3, "0").slice(0, 2)}`;
+      setFeed((f) => [{ ts, ...item }, ...f].slice(0, 40));
+    };
+    push();
+    const id = setInterval(push, 650);
+    return () => clearInterval(id);
+  }, [status]);
+
+  useEffect(() => {
+    if (status === "done") {
+      const d = new Date();
+      const ts = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}.00`;
+      setFeed((f) => [{ ts, msg: "analysis complete · verdict rendered", level: "ok" as const }, ...f].slice(0, 40));
+    } else if (status === "error") {
+      const d = new Date();
+      const ts = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}.00`;
+      setFeed((f) => [{ ts, msg: "pipeline aborted · see console", level: "warn" as const }, ...f].slice(0, 40));
+    }
+  }, [status]);
 
   const runAnalysis = useCallback(
     async (blob: Blob, format: "webm" | "mp3" | "wav" | "m4a" | "ogg" | "aac" | "flac") => {
@@ -154,11 +200,56 @@ function Home() {
               node: vox-01 · region: eu-central · uplink: e2e-encrypted
             </span>
           </div>
-          <span className="hidden md:inline text-emerald-500/60">
-            [ ethical_use_only ] threat_intel: v4.2.0
+          <span className="hidden md:flex items-center gap-2 text-emerald-500/60">
+            {status === "analyzing" && feed[0] ? (
+              <>
+                <span className="h-1.5 w-1.5 animate-ping rounded-full bg-amber-400" />
+                <span className="text-amber-300/80">[{feed[0].ts}]</span>
+                <span className="text-emerald-300/80 normal-case tracking-normal">{feed[0].msg}</span>
+              </>
+            ) : (
+              <>[ ethical_use_only ] threat_intel: v4.2.0</>
+            )}
           </span>
         </div>
       </div>
+
+      {/* Live console feed — active during analysis */}
+      {(status === "analyzing" || feed.length > 0) && (
+        <div className="relative z-10 border-b border-emerald-500/10 bg-black/60">
+          <div className="mx-auto max-w-6xl px-6 py-2">
+            <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-500/60">
+              <span className="flex items-center gap-2">
+                <span className={`h-1.5 w-1.5 rounded-full ${status === "analyzing" ? "animate-pulse bg-emerald-400 shadow-[0_0_8px_#34d399]" : "bg-emerald-700"}`} />
+                live_feed // threat_intel.stream
+              </span>
+              <span className="text-emerald-600">{feed.length} events</span>
+            </div>
+            <div className="mt-1 max-h-24 overflow-hidden font-mono text-[11px] leading-5">
+              {feed.slice(0, 5).map((e, i) => (
+                <div
+                  key={`${e.ts}-${i}`}
+                  className="flex gap-3 whitespace-nowrap"
+                  style={{ opacity: 1 - i * 0.18 }}
+                >
+                  <span className="text-emerald-600">[{e.ts}]</span>
+                  <span
+                    className={
+                      e.level === "warn"
+                        ? "text-amber-300"
+                        : e.level === "ok"
+                          ? "text-emerald-300"
+                          : "text-emerald-200/80"
+                    }
+                  >
+                    {e.level === "warn" ? "⚠" : e.level === "ok" ? "✓" : "›"} {e.msg}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <header className="relative z-10 border-b border-emerald-500/15 bg-gradient-to-b from-black/60 to-transparent backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
