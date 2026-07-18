@@ -447,6 +447,18 @@ function Home() {
 
             <AntiSpoofingCard analysis={report.antiSpoofing} />
 
+            <LinguaForensicsCard data={report.linguaForensics} />
+
+            <AdversarialLab
+              audioUrl={audioUrl}
+              baselineAi={report.aiVoiceScore}
+              runAnalyze={async (blob, format) => {
+                const base64 = await blobToBase64(blob);
+                return analyze({ data: { audioBase64: base64, format } });
+              }}
+            />
+
+
             <DeepfakeLocalization
               segments={report.deepfakeAnalysis.segments}
               estimatedDuration={report.deepfakeAnalysis.estimatedDuration}
