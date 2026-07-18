@@ -329,11 +329,6 @@ function Home() {
 
       <main className="relative z-10 mx-auto max-w-6xl px-6 py-12">
         <section className="mb-10">
-          <div className="mb-3 font-mono text-xs text-emerald-500/80">
-            <span className="text-emerald-400">root@voxguard</span>
-            <span className="text-emerald-600">:~#</span>{" "}
-            <span className="text-emerald-200">./detect --target=audio --mode=forensic</span>
-          </div>
           <h1 className="max-w-3xl font-mono text-4xl font-bold leading-tight tracking-tight text-emerald-100 sm:text-5xl">
             <span className="glow-emerald">Intercept</span> synthetic voices
             <br />
