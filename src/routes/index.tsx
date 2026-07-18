@@ -32,10 +32,11 @@ import {
   type Severity,
   type HumanVerifier,
   type VoiceOrigin,
+  type AntiSpoofingAnalysis,
 } from "@/lib/fraud-detection.functions";
 import { SpectrogramCompare } from "@/components/SpectrogramCompare";
 import { DeepfakeLocalization } from "@/components/DeepfakeLocalization";
-import { User, CheckCircle2, XCircle, HelpCircle } from "lucide-react";
+import { User, CheckCircle2, XCircle, HelpCircle, Radio } from "lucide-react";
 
 
 
@@ -244,6 +245,8 @@ function Home() {
             <VoiceOriginCard origin={report.voiceOrigin} human={report.humanVerifier} />
 
             <DeepfakeSpecialistCard analysis={report.deepfakeAnalysis} />
+
+            <AntiSpoofingCard analysis={report.antiSpoofing} />
 
             <DeepfakeLocalization
               segments={report.deepfakeAnalysis.segments}
@@ -560,7 +563,9 @@ function VoiceOriginCard({
             <p className="mt-1 text-xs text-slate-400">
               Ensemble confidence:{" "}
               <span className="font-mono text-slate-200">{origin.confidence}%</span> ·
-              fused from 3 specialist passes
+              calibrated P(AI):{" "}
+              <span className="font-mono text-slate-200">{origin.calibratedAiProbability}%</span> ·
+              fused from 4 specialist passes
             </p>
           </div>
         </div>
@@ -601,7 +606,7 @@ function VoiceOriginCard({
         <div className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
           Model agreement (AI-likelihood axis, lower = more human)
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <AgreementPill label="Generalist" value={origin.agreement.generalistAi} />
           <AgreementPill
             label="Deepfake specialist"
@@ -610,6 +615,10 @@ function VoiceOriginCard({
           <AgreementPill
             label="Human verifier"
             value={100 - origin.agreement.humanVerifier}
+          />
+          <AgreementPill
+            label="Anti-spoofing"
+            value={origin.agreement.antiSpoofing}
           />
         </div>
       </div>
@@ -760,6 +769,108 @@ function DeepfakeSpecialistCard({ analysis }: { analysis: DeepfakeAnalysis }) {
             ))}
           </ul>
         </div>
+      )}
+    </Card>
+  );
+}
+
+
+function AntiSpoofingCard({ analysis }: { analysis: AntiSpoofingAnalysis }) {
+  const spoof = analysis.spoofScore;
+  const tone =
+    spoof >= 65
+      ? { bar: "bg-rose-500", chip: "text-rose-300 border-rose-500/40 bg-rose-500/10", risk: "High" }
+      : spoof >= 40
+        ? { bar: "bg-amber-400", chip: "text-amber-300 border-amber-400/40 bg-amber-400/10", risk: "Elevated" }
+        : { bar: "bg-emerald-500", chip: "text-emerald-300 border-emerald-500/40 bg-emerald-500/10", risk: "Low" };
+
+  return (
+    <Card className="border-white/10 bg-gradient-to-br from-sky-500/5 to-white/[0.02] p-6">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-sky-500/15 p-2 text-sky-300">
+            <Radio className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
+                Anti-spoofing &amp; liveness
+              </h3>
+              <span className="rounded-full border border-sky-400/30 bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-sky-200">
+                ASVspoof-style
+              </span>
+            </div>
+            <p className="text-xs text-slate-500">
+              Detects replay, splicing, voice-conversion &amp; channel spoofing
+            </p>
+          </div>
+        </div>
+        <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${tone.chip}`}>
+          {tone.risk} spoof risk
+        </span>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <div className="mb-1.5 flex items-center justify-between text-xs text-slate-400">
+            <span>Spoof score</span>
+            <span className="font-mono text-slate-200">{spoof}%</span>
+          </div>
+          <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
+            <div className={`h-full ${tone.bar} transition-all`} style={{ width: `${spoof}%` }} />
+          </div>
+        </div>
+        <div>
+          <div className="mb-1.5 flex items-center justify-between text-xs text-slate-400">
+            <span>Liveness (genuine live-mic)</span>
+            <span className="font-mono text-slate-200">{analysis.livenessScore}%</span>
+          </div>
+          <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full bg-emerald-500 transition-all"
+              style={{ width: `${analysis.livenessScore}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {analysis.channelProfile && (
+        <div className="mt-4 rounded-lg border border-white/5 bg-white/[0.02] p-3">
+          <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            Inferred recording chain
+          </div>
+          <div className="text-sm text-slate-100">{analysis.channelProfile}</div>
+        </div>
+      )}
+
+      {analysis.attackVectors.length > 0 && (
+        <div className="mt-5">
+          <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            Attack vectors (per-vector likelihood)
+          </div>
+          <ul className="space-y-2">
+            {analysis.attackVectors.map((v, i) => {
+              const c =
+                v.score >= 65 ? "bg-rose-500" : v.score >= 40 ? "bg-amber-400" : "bg-emerald-500";
+              return (
+                <li key={i} className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-slate-100">{v.name}</span>
+                    <span className="font-mono text-xs text-slate-300">{v.score}%</span>
+                  </div>
+                  <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+                    <div className={`h-full ${c}`} style={{ width: `${v.score}%` }} />
+                  </div>
+                  <p className="text-xs leading-relaxed text-slate-400">{v.detail}</p>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {analysis.notes && (
+        <p className="mt-4 text-xs leading-relaxed text-slate-400">{analysis.notes}</p>
       )}
     </Card>
   );
