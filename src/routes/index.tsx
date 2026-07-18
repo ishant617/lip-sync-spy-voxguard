@@ -246,6 +246,8 @@ function Home() {
 
             <DeepfakeSpecialistCard analysis={report.deepfakeAnalysis} />
 
+            <AntiSpoofingCard analysis={report.antiSpoofing} />
+
             <DeepfakeLocalization
               segments={report.deepfakeAnalysis.segments}
               estimatedDuration={report.deepfakeAnalysis.estimatedDuration}
