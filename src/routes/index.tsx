@@ -137,6 +137,7 @@ function Home() {
         const base64 = await blobToBase64(blob);
         const result = await analyze({ data: { audioBase64: base64, format } });
         setReport(result);
+        saveHistoryEntry(result);
         setProgress(100);
         setStatus("done");
       } catch (e) {
