@@ -137,8 +137,118 @@
     border-color: var(--color-border);
   }
 
-  body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
+  html, body {
+    background-color: #030807;
+    color: #d5f5df;
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   }
+
+  ::selection {
+    background: rgba(52, 211, 153, 0.35);
+    color: #eafff2;
+  }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #050d0b; }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(#0f3b2d, #0a2820);
+    border: 1px solid rgba(52, 211, 153, 0.2);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: #14513d; }
 }
+
+/* ============ HACKER TERMINAL UI ============ */
+
+/* Matrix grid + soft radial glow background */
+@utility hacker-bg {
+  background-color: #030807;
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(16, 185, 129, 0.10), transparent 55%),
+    radial-gradient(circle at 85% 100%, rgba(139, 92, 246, 0.08), transparent 55%),
+    linear-gradient(rgba(52, 211, 153, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(52, 211, 153, 0.045) 1px, transparent 1px);
+  background-size: auto, auto, 44px 44px, 44px 44px;
+  background-position: 0 0, 0 0, -1px -1px, -1px -1px;
+}
+
+/* Subtle CRT scanlines overlay */
+@utility scanlines {
+  position: relative;
+}
+@utility scanlines-overlay {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.025) 0px,
+    rgba(255, 255, 255, 0.025) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: overlay;
+  z-index: 1;
+}
+
+/* Terminal window with mac traffic lights */
+@utility term-window {
+  border: 1px solid rgba(52, 211, 153, 0.22);
+  background: linear-gradient(180deg, rgba(4, 18, 14, 0.9), rgba(3, 10, 8, 0.95));
+  box-shadow:
+    0 0 0 1px rgba(52, 211, 153, 0.05),
+    0 20px 60px -20px rgba(16, 185, 129, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  overflow: hidden;
+}
+@utility term-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: linear-gradient(180deg, #0a1a15, #061410);
+  border-bottom: 1px solid rgba(52, 211, 153, 0.15);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: #6ee7b7;
+  text-transform: uppercase;
+}
+@utility term-dot-red { width: 10px; height: 10px; border-radius: 999px; background: #ff5f57; box-shadow: 0 0 6px rgba(255, 95, 87, 0.6); }
+@utility term-dot-amber { width: 10px; height: 10px; border-radius: 999px; background: #febc2e; box-shadow: 0 0 6px rgba(254, 188, 46, 0.6); }
+@utility term-dot-green { width: 10px; height: 10px; border-radius: 999px; background: #28c840; box-shadow: 0 0 6px rgba(40, 200, 64, 0.6); }
+
+@utility glow-emerald {
+  text-shadow: 0 0 8px rgba(52, 211, 153, 0.6), 0 0 22px rgba(52, 211, 153, 0.25);
+}
+@utility glow-amber {
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.6), 0 0 22px rgba(251, 191, 36, 0.25);
+}
+
+@utility blink-caret {
+  display: inline-block;
+  width: 0.55ch;
+  height: 1em;
+  vertical-align: -0.15em;
+  background: #34d399;
+  box-shadow: 0 0 10px #34d399;
+  animation: term-blink 1s steps(2, start) infinite;
+}
+
+@keyframes term-blink {
+  to { visibility: hidden; }
+}
+
+@keyframes term-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@utility marquee-track {
+  display: inline-flex;
+  gap: 3rem;
+  white-space: nowrap;
+  animation: term-marquee 40s linear infinite;
+}
+
