@@ -37,6 +37,13 @@ import {
 import { SpectrogramCompare } from "@/components/SpectrogramCompare";
 import { DeepfakeLocalization } from "@/components/DeepfakeLocalization";
 import { SpeakerVerificationCard } from "@/components/SpeakerVerification";
+import {
+  LinguaForensicsCard,
+  LiveStreamMonitor,
+  AdversarialLab,
+  ThreatDashboard,
+  saveHistoryEntry,
+} from "@/components/AdvancedFeatures";
 import { User, CheckCircle2, XCircle, HelpCircle, Radio } from "lucide-react";
 
 
@@ -130,6 +137,7 @@ function Home() {
         const base64 = await blobToBase64(blob);
         const result = await analyze({ data: { audioBase64: base64, format } });
         setReport(result);
+        saveHistoryEntry(result);
         setProgress(100);
         setStatus("done");
       } catch (e) {
@@ -429,6 +437,11 @@ function Home() {
           <SpeakerVerificationCard />
         </div>
 
+        <section className="mt-10 grid gap-6 lg:grid-cols-2">
+          <LiveStreamMonitor />
+          <ThreatDashboard />
+        </section>
+
         {report && (
           <section className="mt-10 space-y-6">
             <VerdictCard report={report} onReset={reset} />
@@ -438,6 +451,18 @@ function Home() {
             <DeepfakeSpecialistCard analysis={report.deepfakeAnalysis} />
 
             <AntiSpoofingCard analysis={report.antiSpoofing} />
+
+            <LinguaForensicsCard data={report.linguaForensics} />
+
+            <AdversarialLab
+              audioUrl={audioUrl}
+              baselineAi={report.aiVoiceScore}
+              runAnalyze={async (blob, format) => {
+                const base64 = await blobToBase64(blob);
+                return analyze({ data: { audioBase64: base64, format } });
+              }}
+            />
+
 
             <DeepfakeLocalization
               segments={report.deepfakeAnalysis.segments}

@@ -59,6 +59,16 @@ export type HumanVerifier = {
   notes: string;
 };
 
+export type LinguaForensics = {
+  language: string;
+  languageConfidence: number;
+  accents: Array<{ region: string; confidence: number }>;
+  codeSwitching: boolean;
+  codeSwitchDetail: string;
+  identityMismatchRisk: number;
+  notes: string;
+};
+
 export type VoiceOrigin = {
   label: "human" | "ai" | "uncertain";
   confidence: number;
@@ -100,6 +110,7 @@ export type DetectionReport = {
   humanVerifier: HumanVerifier;
   antiSpoofing: AntiSpoofingAnalysis;
   voiceOrigin: VoiceOrigin;
+  linguaForensics: LinguaForensics;
   verdict: "authentic" | "suspicious" | "likely_fraud" | "ai_synthesized";
   headline: string;
   reasoning: string;
@@ -340,6 +351,55 @@ const ANTISPOOF_SCHEMA = {
   required: ["spoofScore", "livenessScore", "channelProfile", "notes", "attackVectors"],
 } as const;
 
+const LINGUA_SYSTEM_PROMPT = `You are a specialised LANGUAGE, ACCENT & CODE-SWITCHING forensic analyst. Your ONLY job is to profile the linguistic identity of the speaker(s) in the audio.
+
+Return strict JSON matching the schema:
+- language: primary language spoken (BCP-47 short form like "English", "Spanish", "Hindi").
+- languageConfidence: 0-100.
+- accents: up to 3 candidate regional accents ranked by confidence (e.g. "West African English", "Indian English (South)", "US General American", "Received Pronunciation", "Rioplatense Spanish"). Each { region, confidence 0-100 }.
+- codeSwitching: true if the speaker mixes languages mid-utterance.
+- codeSwitchDetail: short description of the switch, or "none".
+- identityMismatchRisk: 0-100 — how likely the accent contradicts a claimed identity for common scam scenarios (e.g. "IRS agent" with strong non-native accent, or a "local bank rep" whose accent doesn't match the bank's region). If the audio has no such claim, base this on generic scam-call accent patterns (call-center Global South accents impersonating US/UK institutions score higher).
+- notes: 1-2 sentence forensic summary.
+
+Be calibrated. Do not invent accents; if unsure say "Uncertain" with low confidence.`;
+
+const LINGUA_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    language: { type: "string" },
+    languageConfidence: { type: "number" },
+    codeSwitching: { type: "boolean" },
+    codeSwitchDetail: { type: "string" },
+    identityMismatchRisk: { type: "number" },
+    notes: { type: "string" },
+    accents: {
+      type: "array",
+      minItems: 1,
+      maxItems: 3,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          region: { type: "string" },
+          confidence: { type: "number" },
+        },
+        required: ["region", "confidence"],
+      },
+    },
+  },
+  required: [
+    "language",
+    "languageConfidence",
+    "codeSwitching",
+    "codeSwitchDetail",
+    "identityMismatchRisk",
+    "notes",
+    "accents",
+  ],
+} as const;
+
 async function callGateway(apiKey: string, body: unknown) {
   const res = await fetch(GATEWAY_URL, {
     method: "POST",
@@ -365,7 +425,7 @@ export const analyzeVoice = createServerFn({ method: "POST" })
       input_audio: { data: data.audioBase64, format: data.format },
     };
 
-    const [parsed, deepfake, human, antispoof] = await Promise.all([
+    const [parsed, deepfake, human, antispoof, lingua] = await Promise.all([
       callGateway(apiKey, {
         model: MODEL,
         messages: [
@@ -465,6 +525,31 @@ export const analyzeVoice = createServerFn({ method: "POST" })
         channelProfile: string;
         notes: string;
         attackVectors: AttackVector[];
+      }>,
+      callGateway(apiKey, {
+        model: MODEL,
+        messages: [
+          { role: "system", content: LINGUA_SYSTEM_PROMPT },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Profile the language, accent(s), code-switching and identity-mismatch risk. Return JSON matching the schema." },
+              audioContent,
+            ],
+          },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: { name: "lingua_forensics", strict: true, schema: LINGUA_SCHEMA },
+        },
+      }) as Promise<{
+        language: string;
+        languageConfidence: number;
+        accents: Array<{ region: string; confidence: number }>;
+        codeSwitching: boolean;
+        codeSwitchDetail: string;
+        identityMismatchRisk: number;
+        notes: string;
       }>,
     ]);
 
@@ -579,7 +664,18 @@ export const analyzeVoice = createServerFn({ method: "POST" })
           antiSpoofing: Math.max(synthesisAttack, livenessAsAi),
         },
       },
-
+      linguaForensics: {
+        language: lingua.language ?? "Unknown",
+        languageConfidence: clamp(lingua.languageConfidence),
+        accents: (lingua.accents ?? []).map((a) => ({
+          region: a.region,
+          confidence: clamp(a.confidence),
+        })),
+        codeSwitching: !!lingua.codeSwitching,
+        codeSwitchDetail: lingua.codeSwitchDetail ?? "",
+        identityMismatchRisk: clamp(lingua.identityMismatchRisk),
+        notes: lingua.notes ?? "",
+      },
 
       verdict,
       headline: parsed.headline ?? defaultHeadline(verdict),
