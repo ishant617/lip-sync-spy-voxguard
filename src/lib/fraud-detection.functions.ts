@@ -296,7 +296,49 @@ const HUMAN_SCHEMA = {
   required: ["humanScore", "notes", "biosignals"],
 } as const;
 
+const ANTISPOOF_SYSTEM_PROMPT = `You are a specialised ANTI-SPOOFING / LIVENESS detector — the ASVspoof-style adversarial layer that catches attacks the other detectors miss.
 
+Your ONLY job: score how likely this audio was crafted to spoof a voice-authentication or telephony system. Consider ALL attack vectors simultaneously and return per-vector scores.
+
+Attack vectors to score independently (0-100 each, higher = stronger evidence):
+- "Replay attack" — audio re-recorded from a speaker (double-convolution artifacts, room-in-room reverb, band-limited high frequencies, playback device coloration)
+- "Voice conversion (VC)" — real speaker A converted to sound like speaker B (spectral warping seams, prosody-timbre mismatch, phase discontinuities at frame boundaries)
+- "Neural TTS synthesis" — fully generated speech (vocoder hiss, over-smooth envelope, absent breathing) — score complementary to the deepfake specialist
+- "Audio splicing / edit" — concatenated segments from different recordings (abrupt noise-floor changes, cut mid-phoneme, energy discontinuities, changes in reverb tail)
+- "Channel spoofing" — fake telephony channel (added codec artifacts, simulated packet loss, band-limiting to look like a phone call when it isn't)
+
+Also emit a livenessScore (0-100) — HIGH means the recording behaves like a genuine live microphone capture (single acoustic path, consistent noise floor, natural mic proximity effects), LOW means processed/replayed/synthetic.
+
+channelProfile: short description of the recording chain you infer (e.g. "Close-mic condenser, quiet room", "8kHz narrowband telephony", "Double-recorded playback via laptop speaker", "Studio-clean, no room signature — synthesis suspected").
+
+spoofScore: overall attack likelihood (0-100), roughly the max of attack vectors tempered by liveness. Be calibrated — genuine live human recording 0-25, obvious attack 70-100.`;
+
+const ANTISPOOF_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    spoofScore: { type: "number" },
+    livenessScore: { type: "number" },
+    channelProfile: { type: "string" },
+    notes: { type: "string" },
+    attackVectors: {
+      type: "array",
+      minItems: 3,
+      maxItems: 6,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          name: { type: "string" },
+          score: { type: "number" },
+          detail: { type: "string" },
+        },
+        required: ["name", "score", "detail"],
+      },
+    },
+  },
+  required: ["spoofScore", "livenessScore", "channelProfile", "notes", "attackVectors"],
+} as const;
 
 async function callGateway(apiKey: string, body: unknown) {
   const res = await fetch(GATEWAY_URL, {
