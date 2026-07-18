@@ -221,7 +221,7 @@ function Home() {
 
       {/* Top status bar */}
       <div className="relative z-10 border-b border-emerald-500/15 bg-black/40 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-emerald-400/80">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.15em] text-emerald-400/80 sm:px-6 sm:text-[11px] sm:tracking-[0.18em]">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
