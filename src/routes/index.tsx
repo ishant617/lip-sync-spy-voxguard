@@ -36,6 +36,7 @@ import {
 } from "@/lib/fraud-detection.functions";
 import { SpectrogramCompare } from "@/components/SpectrogramCompare";
 import { DeepfakeLocalization } from "@/components/DeepfakeLocalization";
+import { SpeakerVerificationCard } from "@/components/SpeakerVerification";
 import { User, CheckCircle2, XCircle, HelpCircle, Radio } from "lucide-react";
 
 
@@ -237,6 +238,10 @@ function Home() {
             </div>
           )}
         </Card>
+
+        <div className="mt-6">
+          <SpeakerVerificationCard />
+        </div>
 
         {report && (
           <section className="mt-10 space-y-6">
