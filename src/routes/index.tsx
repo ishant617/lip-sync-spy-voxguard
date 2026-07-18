@@ -314,6 +314,7 @@ function Home() {
                 <span className="hidden sm:inline font-mono text-xs text-emerald-300/80">
                   {user.displayName ?? user.email ?? user.id.slice(0, 8)}
                 </span>
+                <TwoFactorButton onOpen={() => setTfaOpen(true)} />
                 <button
                   type="button"
                   onClick={signOut}
