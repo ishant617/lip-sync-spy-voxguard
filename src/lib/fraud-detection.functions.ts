@@ -110,6 +110,7 @@ export type DetectionReport = {
   humanVerifier: HumanVerifier;
   antiSpoofing: AntiSpoofingAnalysis;
   voiceOrigin: VoiceOrigin;
+  linguaForensics: LinguaForensics;
   verdict: "authentic" | "suspicious" | "likely_fraud" | "ai_synthesized";
   headline: string;
   reasoning: string;
