@@ -403,7 +403,7 @@ function Home() {
                 disabled={status === "analyzing"}
                 aria-pressed={status === "recording"}
                 aria-label={status === "recording" ? "Stop microphone capture and analyze" : "Start live microphone capture"}
-                className={`group flex items-center justify-center gap-3 rounded-md border px-6 py-8 text-left font-mono transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:cursor-not-allowed disabled:opacity-60 ${
+                className={`group flex items-center justify-center gap-3 rounded-md border px-4 py-6 text-left font-mono transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:cursor-not-allowed disabled:opacity-60 sm:px-6 sm:py-8 ${
                   status === "recording"
                     ? "border-rose-500/60 bg-rose-500/10 shadow-[0_0_24px_rgba(244,63,94,0.25)]"
                     : "border-emerald-500/30 bg-emerald-500/[0.04] hover:border-emerald-400 hover:bg-emerald-500/10 hover:shadow-[0_0_24px_rgba(52,211,153,0.25)]"
