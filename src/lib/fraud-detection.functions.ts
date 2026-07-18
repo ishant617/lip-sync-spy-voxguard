@@ -59,6 +59,16 @@ export type HumanVerifier = {
   notes: string;
 };
 
+export type LinguaForensics = {
+  language: string;
+  languageConfidence: number;
+  accents: Array<{ region: string; confidence: number }>;
+  codeSwitching: boolean;
+  codeSwitchDetail: string;
+  identityMismatchRisk: number;
+  notes: string;
+};
+
 export type VoiceOrigin = {
   label: "human" | "ai" | "uncertain";
   confidence: number;
