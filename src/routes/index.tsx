@@ -62,7 +62,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "VoxGuard — AI Voice & Fraud Detection" },
       {
         property: "og:description",
-        content: "Detect deepfake voices and social-engineering fraud calls.",
+        content: "Detect AI-cloned voices and voice-fraud calls. Upload or record audio and get an instant forensic verdict.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

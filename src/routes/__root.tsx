@@ -109,20 +109,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Loop-engineered detection of AI-cloned voices and voice-fraud calls.",
+          "Detect AI-cloned voices and voice-fraud calls. Upload or record audio and get an instant forensic verdict.",
       },
       { property: "og:title", content: "VoxGuard — AI Voice & Fraud Detection" },
       {
         property: "og:description",
         content:
-          "Loop-engineered detection of AI-cloned voices and voice-fraud calls.",
+          "Detect AI-cloned voices and voice-fraud calls. Upload or record audio and get an instant forensic verdict.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "VoxGuard — AI Voice & Fraud Detection" },
+      { name: "twitter:description", content: "Detect AI-cloned voices and voice-fraud calls. Upload or record audio and get an instant forensic verdict." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bc6729f4-dfeb-42cf-8bf4-cefeade12fa5/id-preview-e4e54987--541b521a-7608-4907-a784-d0bf7757ba3f.lovable.app-1784374675334.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bc6729f4-dfeb-42cf-8bf4-cefeade12fa5/id-preview-e4e54987--541b521a-7608-4907-a784-d0bf7757ba3f.lovable.app-1784374675334.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
