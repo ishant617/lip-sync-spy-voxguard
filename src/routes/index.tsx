@@ -75,6 +75,7 @@ type Status = "idle" | "recording" | "analyzing" | "done" | "error";
 function Home() {
   const analyze = useServerFn(analyzeVoice);
   const router = useRouter();
+  const { user, isLoading: authLoading, signInWithGoogle, signOut } = useAuth();
   const [status, setStatus] = useState<Status>("idle");
   const [progress, setProgress] = useState(0);
   const [report, setReport] = useState<DetectionReport | null>(null);
@@ -83,6 +84,7 @@ function Home() {
   const mediaRecRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const abortRef = useRef<AbortController | null>(null);
+
 
   useEffect(() => {
     if (status !== "analyzing") return;
