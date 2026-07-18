@@ -200,9 +200,41 @@ export function AudioWaveform({ src, height = 96 }: Props) {
               setHover((e.clientX - rect.left) / rect.width);
             }}
             onMouseLeave={() => setHover(null)}
-            className="h-full w-full cursor-pointer"
+            onKeyDown={(e) => {
+              const a = audioRef.current;
+              if (!a || !a.duration) return;
+              if (e.key === "ArrowRight") {
+                e.preventDefault();
+                a.currentTime = Math.min(a.duration, a.currentTime + (e.shiftKey ? 5 : 1));
+                setProgress(a.currentTime / a.duration);
+              } else if (e.key === "ArrowLeft") {
+                e.preventDefault();
+                a.currentTime = Math.max(0, a.currentTime - (e.shiftKey ? 5 : 1));
+                setProgress(a.currentTime / a.duration);
+              } else if (e.key === "Home") {
+                e.preventDefault();
+                a.currentTime = 0;
+                setProgress(0);
+              } else if (e.key === "End") {
+                e.preventDefault();
+                a.currentTime = a.duration;
+                setProgress(1);
+              } else if (e.key === " " || e.key === "Enter") {
+                e.preventDefault();
+                void toggle();
+              }
+            }}
+            tabIndex={0}
+            role="slider"
+            aria-label="Audio waveform — seek playback position. Arrow keys to seek, space to play or pause."
+            aria-valuemin={0}
+            aria-valuemax={Math.max(1, Math.round(duration))}
+            aria-valuenow={Math.round(progress * duration)}
+            aria-valuetext={`${fmt(progress * duration)} of ${fmt(duration)}`}
+            className="h-full w-full cursor-pointer rounded outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             style={{ height }}
           />
+
         </div>
       </div>
       <audio
