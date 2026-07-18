@@ -532,13 +532,6 @@ function Home() {
             )}
           </section>
         )}
-
-
-
-        <footer className="mt-16 border-t border-emerald-500/15 pt-6 text-center font-mono text-[11px] uppercase tracking-[0.25em] text-emerald-500/60">
-          <span className="text-emerald-400">$</span> voxguard --version=hackathon.prototype ·{" "}
-          <span className="text-emerald-400/80">ethical_use_only</span> · session logged
-        </footer>
       </main>
     </div>
   );
