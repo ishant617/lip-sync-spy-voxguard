@@ -79,6 +79,7 @@ function Home() {
   const { user, isLoading: authLoading, signInWithGoogle, signOut } = useAuth();
   const [status, setStatus] = useState<Status>("idle");
   const [progress, setProgress] = useState(0);
+  const [tfaOpen, setTfaOpen] = useState(false);
   const [report, setReport] = useState<DetectionReport | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [feed, setFeed] = useState<Array<{ ts: string; msg: string; level: "info" | "warn" | "ok" }>>([]);
