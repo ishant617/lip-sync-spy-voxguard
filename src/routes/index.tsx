@@ -563,7 +563,9 @@ function VoiceOriginCard({
             <p className="mt-1 text-xs text-slate-400">
               Ensemble confidence:{" "}
               <span className="font-mono text-slate-200">{origin.confidence}%</span> ·
-              fused from 3 specialist passes
+              calibrated P(AI):{" "}
+              <span className="font-mono text-slate-200">{origin.calibratedAiProbability}%</span> ·
+              fused from 4 specialist passes
             </p>
           </div>
         </div>
