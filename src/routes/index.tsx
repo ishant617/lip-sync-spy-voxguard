@@ -245,12 +245,18 @@ function Home() {
           <div className="mx-auto max-w-6xl px-6 py-2">
             <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-500/60">
               <span className="flex items-center gap-2">
-                <span className={`h-1.5 w-1.5 rounded-full ${status === "analyzing" ? "animate-pulse bg-emerald-400 shadow-[0_0_8px_#34d399]" : "bg-emerald-700"}`} />
+                <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${status === "analyzing" ? "animate-pulse bg-emerald-400 shadow-[0_0_8px_#34d399]" : "bg-emerald-700"}`} />
                 live_feed // threat_intel.stream
               </span>
               <span className="text-emerald-600">{feed.length} events</span>
             </div>
-            <div className="mt-1 max-h-24 overflow-hidden font-mono text-[11px] leading-5">
+            <div
+              className="mt-1 max-h-24 overflow-hidden font-mono text-[11px] leading-5"
+              role="log"
+              aria-live="polite"
+              aria-relevant="additions"
+              aria-label="Live analysis threat intelligence feed"
+            >
               {feed.slice(0, 5).map((e, i) => (
                 <div
                   key={`${e.ts}-${i}`}
@@ -267,7 +273,9 @@ function Home() {
                           : "text-emerald-200/80"
                     }
                   >
-                    {e.level === "warn" ? "⚠" : e.level === "ok" ? "✓" : "›"} {e.msg}
+                    <span aria-hidden="true">{e.level === "warn" ? "⚠" : e.level === "ok" ? "✓" : "›"} </span>
+                    <span className="sr-only">{e.level === "warn" ? "Warning: " : e.level === "ok" ? "Success: " : ""}</span>
+                    {e.msg}
                   </span>
                 </div>
               ))}
@@ -275,6 +283,7 @@ function Home() {
           </div>
         </div>
       )}
+
 
       <header className="relative z-10 border-b border-emerald-500/15 bg-gradient-to-b from-black/60 to-transparent backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
