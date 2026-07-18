@@ -390,23 +390,32 @@ function Home() {
 
 
         <section id="how" className="mt-16">
-          <h2 className="mb-6 text-2xl font-semibold">How VoxGuard works</h2>
+          <div className="mb-6 font-mono">
+            <div className="text-xs text-emerald-500/70">
+              <span className="text-emerald-400">root@voxguard</span>
+              <span className="text-emerald-600">:~#</span> cat ./pipeline.md
+            </div>
+            <h2 className="mt-2 text-2xl font-bold text-emerald-200 glow-emerald">
+              // how the exploit chain works
+            </h2>
+          </div>
           <div className="grid gap-4 md:grid-cols-2">
             <PipelineCard
               icon={<Waves className="h-5 w-5" />}
-              title="Acoustic forensics"
+              title="acoustic_forensics.py"
               text="Inspects spectral artifacts, prosody, breathing and room-tone for TTS / voice-clone signatures (ElevenLabs, VALL-E, XTTS)."
             />
             <PipelineCard
               icon={<Brain className="h-5 w-5" />}
-              title="Linguistic analysis"
+              title="linguistic_analysis.py"
               text="Flags scripted phrasing, urgency, authority impersonation, and requests for OTPs, gift-cards or wire transfers."
             />
           </div>
         </section>
 
-        <footer className="mt-16 border-t border-white/5 pt-6 text-center text-xs text-slate-500">
-          VoxGuard · Hackathon prototype · For research &amp; educational use only.
+        <footer className="mt-16 border-t border-emerald-500/15 pt-6 text-center font-mono text-[11px] uppercase tracking-[0.25em] text-emerald-500/60">
+          <span className="text-emerald-400">$</span> voxguard --version=hackathon.prototype ·{" "}
+          <span className="text-emerald-400/80">ethical_use_only</span> · session logged
         </footer>
       </main>
     </div>
