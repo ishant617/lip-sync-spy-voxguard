@@ -37,6 +37,13 @@ import {
 import { SpectrogramCompare } from "@/components/SpectrogramCompare";
 import { DeepfakeLocalization } from "@/components/DeepfakeLocalization";
 import { SpeakerVerificationCard } from "@/components/SpeakerVerification";
+import {
+  LinguaForensicsCard,
+  LiveStreamMonitor,
+  AdversarialLab,
+  ThreatDashboard,
+  saveHistoryEntry,
+} from "@/components/AdvancedFeatures";
 import { User, CheckCircle2, XCircle, HelpCircle, Radio } from "lucide-react";
 
 
