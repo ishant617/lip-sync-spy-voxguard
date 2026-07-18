@@ -664,7 +664,18 @@ export const analyzeVoice = createServerFn({ method: "POST" })
           antiSpoofing: Math.max(synthesisAttack, livenessAsAi),
         },
       },
-
+      linguaForensics: {
+        language: lingua.language ?? "Unknown",
+        languageConfidence: clamp(lingua.languageConfidence),
+        accents: (lingua.accents ?? []).map((a) => ({
+          region: a.region,
+          confidence: clamp(a.confidence),
+        })),
+        codeSwitching: !!lingua.codeSwitching,
+        codeSwitchDetail: lingua.codeSwitchDetail ?? "",
+        identityMismatchRisk: clamp(lingua.identityMismatchRisk),
+        notes: lingua.notes ?? "",
+      },
 
       verdict,
       headline: parsed.headline ?? defaultHeadline(verdict),
