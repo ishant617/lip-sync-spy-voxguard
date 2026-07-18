@@ -365,7 +365,7 @@ export const analyzeVoice = createServerFn({ method: "POST" })
       input_audio: { data: data.audioBase64, format: data.format },
     };
 
-    const [parsed, deepfake, human] = await Promise.all([
+    const [parsed, deepfake, human, antispoof] = await Promise.all([
       callGateway(apiKey, {
         model: MODEL,
         messages: [
@@ -403,10 +403,7 @@ export const analyzeVoice = createServerFn({ method: "POST" })
           {
             role: "user",
             content: [
-              {
-                type: "text",
-                text: "Run the specialised deepfake detector on this audio. Return JSON matching the schema.",
-              },
+              { type: "text", text: "Run the specialised deepfake detector on this audio. Return JSON matching the schema." },
               audioContent,
             ],
           },
@@ -432,10 +429,7 @@ export const analyzeVoice = createServerFn({ method: "POST" })
           {
             role: "user",
             content: [
-              {
-                type: "text",
-                text: "Run the human-voice verifier on this audio. Return JSON matching the schema.",
-              },
+              { type: "text", text: "Run the human-voice verifier on this audio. Return JSON matching the schema." },
               audioContent,
             ],
           },
@@ -449,26 +443,69 @@ export const analyzeVoice = createServerFn({ method: "POST" })
         notes: string;
         biosignals: HumanBiosignal[];
       }>,
+      callGateway(apiKey, {
+        model: MODEL,
+        messages: [
+          { role: "system", content: ANTISPOOF_SYSTEM_PROMPT },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Run the anti-spoofing / liveness detector on this audio. Return JSON matching the schema." },
+              audioContent,
+            ],
+          },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: { name: "anti_spoofing", strict: true, schema: ANTISPOOF_SCHEMA },
+        },
+      }) as Promise<{
+        spoofScore: number;
+        livenessScore: number;
+        channelProfile: string;
+        notes: string;
+        attackVectors: AttackVector[];
+      }>,
     ]);
 
-    // Ensemble fusion across three specialists.
+    // 4-specialist ensemble fusion on the AI-likelihood axis.
     const specialistScore = clamp(deepfake.deepfakeScore);
     const generalistScore = clamp(parsed.aiVoiceScore);
     const humanScore = clamp(human.humanScore);
-    const humanAsAi = 100 - humanScore; // convert to AI-likelihood axis
+    const humanAsAi = 100 - humanScore;
+    const spoofScore = clamp(antispoof.spoofScore);
+    const livenessScore = clamp(antispoof.livenessScore);
+    const livenessAsAi = 100 - livenessScore;
+    // Attack-driven AI axis: neural-TTS + voice-conversion are the synthesis vectors
+    // (replay / splicing / channel push fraudScore, not aiVoiceScore).
+    const vec = (name: string) =>
+      clamp(
+        antispoof.attackVectors?.find((v) => v.name.toLowerCase().includes(name))?.score ?? 0,
+      );
+    const synthesisAttack = Math.max(vec("tts"), vec("synthesis"), vec("conversion"), vec("vc"));
 
-    // Weighted: specialist deepfake detector 50%, human verifier 30%, generalist 20%.
+    // Weighted fusion: specialist 40%, human-verifier 25%, anti-spoof synthesis 20%, generalist 15%.
     const aiVoiceScore = Math.round(
-      specialistScore * 0.5 + humanAsAi * 0.3 + generalistScore * 0.2,
+      specialistScore * 0.4 +
+        humanAsAi * 0.25 +
+        Math.max(synthesisAttack, livenessAsAi) * 0.2 +
+        generalistScore * 0.15,
     );
-    const fraudScore = clamp(parsed.fraudScore);
 
-    // Agreement / confidence: low variance across the three AI-axis scores => high confidence.
-    const axis = [specialistScore, humanAsAi, generalistScore];
+    // Calibrated probability via logistic — sharpens confident scores, softens borderline.
+    const logit = (aiVoiceScore - 50) / 12;
+    const calibratedAiProbability = Math.round((1 / (1 + Math.exp(-logit))) * 100);
+
+    // Fraud fuses linguistic fraudScore with non-synthesis attack vectors.
+    const nonSynthAttack = Math.max(vec("replay"), vec("splic"), vec("channel"));
+    const fraudScore = clamp(Math.max(parsed.fraudScore, nonSynthAttack * 0.6 + spoofScore * 0.2));
+
+    // Agreement / confidence across all 4 AI-axis scores.
+    const axis = [specialistScore, humanAsAi, generalistScore, Math.max(synthesisAttack, livenessAsAi)];
     const mean = axis.reduce((a, b) => a + b, 0) / axis.length;
     const variance = axis.reduce((s, v) => s + (v - mean) ** 2, 0) / axis.length;
     const stdev = Math.sqrt(variance);
-    const originConfidence = clamp(100 - stdev * 2);
+    const originConfidence = clamp(100 - stdev * 1.8);
 
     let originLabel: VoiceOrigin["label"];
     if (aiVoiceScore >= 60 && originConfidence >= 55) originLabel = "ai";
@@ -478,7 +515,7 @@ export const analyzeVoice = createServerFn({ method: "POST" })
     let verdict: DetectionReport["verdict"] = "authentic";
     if (aiVoiceScore >= 65 && fraudScore >= 55) verdict = "likely_fraud";
     else if (aiVoiceScore >= 65) verdict = "ai_synthesized";
-    else if (fraudScore >= 55 || aiVoiceScore >= 45) verdict = "suspicious";
+    else if (fraudScore >= 55 || aiVoiceScore >= 45 || spoofScore >= 60) verdict = "suspicious";
 
     const rawSegments = Array.isArray(deepfake.segments) ? deepfake.segments : [];
     const duration = Math.max(
