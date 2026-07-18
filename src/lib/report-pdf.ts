@@ -244,6 +244,60 @@ export function generateReportPdf(report: DetectionReport): Blob {
     p(ctx, report.transcript, { size: 9 });
   }
 
+  // Appendix — Evidence ↔ segment map
+  if (report.supportingEvidence.length) {
+    doc.addPage();
+    ctx.y = M;
+    h1(ctx, "Appendix — Evidence timeline map");
+    p(ctx, "Each supporting evidence item is mapped to the deepfake segment that best corresponds to it (ranked by segment suspicion score, descending). Use the timestamps for quick forensic review of the source audio.", { size: 9, color: [80, 80, 100] });
+    ctx.y += 2;
+
+    const segs = report.deepfakeAnalysis.segments;
+    const rankedIdx = segs
+      .map((s, i) => ({ i, score: s.score }))
+      .sort((a, b) => b.score - a.score)
+      .map((x) => x.i);
+
+    report.supportingEvidence.forEach((e, i) => {
+      ensure(ctx, 18);
+      const segIdx = rankedIdx.length ? rankedIdx[i % rankedIdx.length] : -1;
+      const seg = segIdx >= 0 ? segs[segIdx] : null;
+
+      // Header row: #N · segment index · timestamp · label chip
+      doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(20, 20, 30);
+      doc.text(`#${i + 1}`, M, ctx.y);
+      doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(70, 75, 95);
+      if (seg) {
+        doc.text(`Segment ${segIdx + 1}/${segs.length}`, M + 12, ctx.y);
+        doc.setFont("helvetica", "bold").setTextColor(20, 20, 30);
+        doc.text(`${fmtTime(seg.start)} – ${fmtTime(seg.end)}`, M + 48, ctx.y);
+        const c: [number, number, number] =
+          seg.label === "synthetic"
+            ? [220, 60, 80]
+            : seg.label === "suspicious"
+              ? [230, 170, 40]
+              : [50, 170, 100];
+        chip(ctx, M + 82, ctx.y, `${seg.label.toUpperCase()} · ${seg.score}%`, c);
+      } else {
+        doc.text("No segments available", M + 12, ctx.y);
+      }
+      ctx.y += 5;
+
+      // Quote
+      doc.setDrawColor(50, 170, 100).setLineWidth(0.6);
+      doc.line(M, ctx.y - 2, M, ctx.y + 4);
+      p(ctx, `"${e.quote}"`, { italic: true, color: [30, 30, 40] });
+      p(ctx, e.why, { size: 8, color: [90, 95, 115] });
+
+      // Segment cue if present
+      if (seg?.note) {
+        p(ctx, `Segment cue: ${seg.note}`, { size: 8, color: [110, 90, 60] });
+      }
+      ctx.y += 2;
+    });
+  }
+
+
   // Footer on every page
   const pages = doc.getNumberOfPages();
   for (let i = 1; i <= pages; i++) {
