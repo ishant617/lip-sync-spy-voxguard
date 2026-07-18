@@ -7,10 +7,38 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, createContext, useContext, type ReactNode } from "react";
+import { useServerFn } from "@tanstack/react-start";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { supabase } from "@/integrations/supabase/client";
+import { ensureProfile } from "@/lib/profiles.functions";
+
+export type AuthUser = {
+  id: string;
+  email?: string | null;
+  displayName?: string | null;
+  avatarUrl?: string | null;
+};
+
+type AuthContextValue = {
+  user: AuthUser | null;
+  isLoading: boolean;
+  signInWithGoogle: () => Promise<void>;
+  signOut: () => Promise<void>;
+};
+
+const AuthContext = createContext<AuthContextValue>({
+  user: null,
+  isLoading: true,
+  signInWithGoogle: async () => {},
+  signOut: async () => {},
+});
+
+export function useAuth() {
+  return useContext(AuthContext);
+}
 
 function NotFoundComponent() {
   return (
@@ -125,11 +153,68 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+  const syncProfile = useServerFn(ensureProfile);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (!isMounted) return;
+      setUser(normalizeUser(data.user));
+      setIsLoading(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+      const currentUser = normalizeUser(session?.user ?? null);
+      setUser(currentUser);
+      router.invalidate();
+      if (event === "SIGNED_IN" && currentUser) {
+        syncProfile({ data: { display_name: currentUser.displayName, avatar_url: currentUser.avatarUrl, role: "user" } }).catch((e) => {
+          console.error("Failed to sync profile:", e);
+        });
+      }
+      if (event !== "SIGNED_OUT") {
+        queryClient.invalidateQueries();
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      listener.subscription.unsubscribe();
+    };
+  }, [queryClient, router, syncProfile]);
+
+  const signInWithGoogle = async () => {
+    const { lovable } = await import("@/integrations/lovable");
+    await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+  };
+
+  const signOut = async () => {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    router.navigate({ to: "/", replace: true });
+  };
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <AuthContext.Provider value={{ user, isLoading, signInWithGoogle, signOut }}>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+      </AuthContext.Provider>
     </QueryClientProvider>
   );
+}
+
+function normalizeUser(user: { id: string; email?: string | null; user_metadata?: Record<string, unknown> } | null): AuthUser | null {
+  if (!user) return null;
+  return {
+    id: user.id,
+    email: user.email ?? null,
+    displayName: (user.user_metadata?.name as string | undefined) ?? null,
+    avatarUrl: (user.user_metadata?.avatar_url as string | undefined) ?? null,
+  };
 }

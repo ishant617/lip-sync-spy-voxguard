@@ -1,4 +1,5 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useAuth } from "./__root";
 import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -74,6 +75,7 @@ type Status = "idle" | "recording" | "analyzing" | "done" | "error";
 function Home() {
   const analyze = useServerFn(analyzeVoice);
   const router = useRouter();
+  const { user, isLoading: authLoading, signInWithGoogle, signOut } = useAuth();
   const [status, setStatus] = useState<Status>("idle");
   const [progress, setProgress] = useState(0);
   const [report, setReport] = useState<DetectionReport | null>(null);
@@ -82,6 +84,7 @@ function Home() {
   const mediaRecRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const abortRef = useRef<AbortController | null>(null);
+
 
   useEffect(() => {
     if (status !== "analyzing") return;
@@ -301,6 +304,34 @@ function Home() {
             </div>
           </div>
 
+          <div className="flex items-center gap-3">
+            {authLoading ? (
+              <span className="font-mono text-xs text-emerald-500/60">auth::initializing</span>
+            ) : user ? (
+              <div className="flex items-center gap-3">
+                <span className="hidden sm:inline font-mono text-xs text-emerald-300/80">
+                  {user.displayName ?? user.email ?? user.id.slice(0, 8)}
+                </span>
+                <button
+                  type="button"
+                  onClick={signOut}
+                  className="rounded border border-emerald-500/30 bg-emerald-500/5 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-emerald-300 transition hover:border-rose-400 hover:bg-rose-500/10 hover:text-rose-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  aria-label="Sign out"
+                >
+                  &gt; sign_out
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={signInWithGoogle}
+                className="rounded border border-emerald-500/30 bg-emerald-500/5 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-emerald-300 transition hover:border-emerald-400 hover:bg-emerald-500/15 hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                aria-label="Sign in with Google"
+              >
+                &gt; sign_in_with_google
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
