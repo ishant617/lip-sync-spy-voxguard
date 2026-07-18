@@ -32,10 +32,11 @@ import {
   type Severity,
   type HumanVerifier,
   type VoiceOrigin,
+  type AntiSpoofingAnalysis,
 } from "@/lib/fraud-detection.functions";
 import { SpectrogramCompare } from "@/components/SpectrogramCompare";
 import { DeepfakeLocalization } from "@/components/DeepfakeLocalization";
-import { User, CheckCircle2, XCircle, HelpCircle } from "lucide-react";
+import { User, CheckCircle2, XCircle, HelpCircle, Radio } from "lucide-react";
 
 
 
