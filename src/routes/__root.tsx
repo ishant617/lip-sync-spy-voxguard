@@ -154,6 +154,7 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const syncProfile = useServerFn(ensureProfile);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -167,8 +168,14 @@ function RootComponent() {
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
-      setUser(normalizeUser(session?.user ?? null));
+      const currentUser = normalizeUser(session?.user ?? null);
+      setUser(currentUser);
       router.invalidate();
+      if (event === "SIGNED_IN" && currentUser) {
+        syncProfile({ data: { display_name: currentUser.displayName, avatar_url: currentUser.avatarUrl, role: "user" } }).catch((e) => {
+          console.error("Failed to sync profile:", e);
+        });
+      }
       if (event !== "SIGNED_OUT") {
         queryClient.invalidateQueries();
       }
@@ -178,7 +185,7 @@ function RootComponent() {
       isMounted = false;
       listener.subscription.unsubscribe();
     };
-  }, [queryClient, router]);
+  }, [queryClient, router, syncProfile]);
 
   const signInWithGoogle = async () => {
     const { lovable } = await import("@/integrations/lovable");
