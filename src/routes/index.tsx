@@ -16,7 +16,9 @@ import {
   AlertTriangle,
   Cpu,
   Fingerprint,
+  Download,
 } from "lucide-react";
+import { downloadReportPdf } from "@/lib/report-pdf";
 import { Button } from "@/components/ui/button";
 import { AudioWaveform } from "@/components/AudioWaveform";
 import { Progress } from "@/components/ui/progress";
@@ -349,9 +351,18 @@ function VerdictCard({
             </div>
           </div>
         </div>
-        <Button variant="outline" onClick={onReset} className="border-white/20">
-          New analysis
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => downloadReportPdf(report)}
+            className="bg-emerald-500 text-slate-950 hover:bg-emerald-400"
+          >
+            <Download className="mr-1.5 h-4 w-4" />
+            Export PDF
+          </Button>
+          <Button variant="outline" onClick={onReset} className="border-white/20">
+            New analysis
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 border-b border-white/5 p-6 sm:grid-cols-2">
