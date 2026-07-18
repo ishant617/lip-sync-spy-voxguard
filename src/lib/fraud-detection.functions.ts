@@ -425,7 +425,7 @@ export const analyzeVoice = createServerFn({ method: "POST" })
       input_audio: { data: data.audioBase64, format: data.format },
     };
 
-    const [parsed, deepfake, human, antispoof] = await Promise.all([
+    const [parsed, deepfake, human, antispoof, lingua] = await Promise.all([
       callGateway(apiKey, {
         model: MODEL,
         messages: [
