@@ -526,6 +526,31 @@ export const analyzeVoice = createServerFn({ method: "POST" })
         notes: string;
         attackVectors: AttackVector[];
       }>,
+      callGateway(apiKey, {
+        model: MODEL,
+        messages: [
+          { role: "system", content: LINGUA_SYSTEM_PROMPT },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Profile the language, accent(s), code-switching and identity-mismatch risk. Return JSON matching the schema." },
+              audioContent,
+            ],
+          },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: { name: "lingua_forensics", strict: true, schema: LINGUA_SCHEMA },
+        },
+      }) as Promise<{
+        language: string;
+        languageConfidence: number;
+        accents: Array<{ region: string; confidence: number }>;
+        codeSwitching: boolean;
+        codeSwitchDetail: string;
+        identityMismatchRisk: number;
+        notes: string;
+      }>,
     ]);
 
     // 4-specialist ensemble fusion on the AI-likelihood axis.
