@@ -433,21 +433,33 @@ function Home() {
 
             {status === "analyzing" && (
               <div className="mt-6 rounded border border-emerald-500/30 bg-black/40 p-4 font-mono text-xs">
-                <div className="mb-2 flex items-center gap-2 text-emerald-300">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="glow-emerald">[ pipeline ]</span>
-                  <span className="text-emerald-400/80">
-                    running specialists · deepfake · human · anti-spoof · generalist…
-                  </span>
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-emerald-300">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="glow-emerald">[ pipeline ]</span>
+                    <span className="text-emerald-400/80">
+                      running specialists · deepfake · human · anti-spoof · lingua · generalist…
+                    </span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={cancelAnalysis}
+                    className="h-7 border-rose-500/40 bg-rose-500/10 px-2 text-[10px] uppercase tracking-wider text-rose-200 hover:bg-rose-500/20"
+                  >
+                    <Square className="mr-1 h-3 w-3" /> cancel
+                  </Button>
                 </div>
                 <Progress value={progress} className="h-1.5 bg-emerald-950" />
-                <div className="mt-2 text-[10px] text-emerald-500/70">
-                  progress: {progress}% · do not disconnect target
+                <div className="mt-2 flex justify-between text-[10px] text-emerald-500/70">
+                  <span>progress: {progress}% · {progress < 30 ? "encoding audio" : progress < 60 ? "querying gateway" : progress < 90 ? "fusing ensemble" : "finalising verdict"}</span>
+                  <span>press cancel to abort</span>
                 </div>
               </div>
             )}
           </div>
         </div>
+
 
 
         <div className="mt-6">
