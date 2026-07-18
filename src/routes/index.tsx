@@ -660,7 +660,7 @@ function VerdictCard({
         />
       </div>
 
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
           <AlertTriangle className="h-3.5 w-3.5" />
           Recommended actions
