@@ -292,47 +292,48 @@ function Home() {
 
 
       <header className="relative z-10 border-b border-emerald-500/15 bg-gradient-to-b from-black/60 to-transparent backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-md border border-emerald-400/40 bg-emerald-500/10 shadow-[0_0_24px_rgba(52,211,153,0.35)]">
+        <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-4 sm:flex sm:px-6 sm:py-5">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-emerald-400/40 bg-emerald-500/10 shadow-[0_0_24px_rgba(52,211,153,0.35)]">
               <ShieldCheck className="h-5 w-5 text-emerald-300" />
             </div>
-            <div className="leading-tight">
-              <div className="font-mono text-lg font-bold tracking-wider text-emerald-200 glow-emerald">
+            <div className="min-w-0 leading-tight">
+              <div className="truncate font-mono text-base font-bold tracking-wider text-emerald-200 glow-emerald sm:text-lg">
                 VOX//GUARD
               </div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-emerald-500/70">
+              <div className="truncate font-mono text-[9px] uppercase tracking-[0.25em] text-emerald-500/70 sm:text-[10px] sm:tracking-[0.3em]">
                 offensive_audio_forensics
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:ml-auto sm:gap-3">
             {authLoading ? (
-              <span className="font-mono text-xs text-emerald-500/60">auth::initializing</span>
+              <span className="font-mono text-xs text-emerald-500/60">auth::init</span>
             ) : user ? (
-              <div className="flex items-center gap-3">
-                <span className="hidden sm:inline font-mono text-xs text-emerald-300/80">
+              <>
+                <span className="hidden max-w-[160px] truncate font-mono text-xs text-emerald-300/80 md:inline">
                   {user.displayName ?? user.email ?? user.id.slice(0, 8)}
                 </span>
                 <TwoFactorButton onOpen={() => setTfaOpen(true)} />
                 <button
                   type="button"
                   onClick={signOut}
-                  className="rounded border border-emerald-500/30 bg-emerald-500/5 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-emerald-300 transition hover:border-rose-400 hover:bg-rose-500/10 hover:text-rose-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  className="rounded border border-emerald-500/30 bg-emerald-500/5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-emerald-300 transition hover:border-rose-400 hover:bg-rose-500/10 hover:text-rose-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-xs"
                   aria-label="Sign out"
                 >
                   &gt; sign_out
                 </button>
-              </div>
+              </>
             ) : (
               <button
                 type="button"
                 onClick={signInWithGoogle}
-                className="rounded border border-emerald-500/30 bg-emerald-500/5 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-emerald-300 transition hover:border-emerald-400 hover:bg-emerald-500/15 hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                className="rounded border border-emerald-500/30 bg-emerald-500/5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-emerald-300 transition hover:border-emerald-400 hover:bg-emerald-500/15 hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-xs"
                 aria-label="Sign in with Google"
               >
-                &gt; sign_in_with_google
+                <span className="sm:hidden">&gt; sign_in</span>
+                <span className="hidden sm:inline">&gt; sign_in_with_google</span>
               </button>
             )}
           </div>
