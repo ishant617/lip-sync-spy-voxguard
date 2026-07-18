@@ -377,7 +377,9 @@ function Home() {
                 type="button"
                 onClick={status === "recording" ? stopRecording : startRecording}
                 disabled={status === "analyzing"}
-                className={`group flex items-center justify-center gap-3 rounded-md border px-6 py-8 text-left font-mono transition ${
+                aria-pressed={status === "recording"}
+                aria-label={status === "recording" ? "Stop microphone capture and analyze" : "Start live microphone capture"}
+                className={`group flex items-center justify-center gap-3 rounded-md border px-6 py-8 text-left font-mono transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:cursor-not-allowed disabled:opacity-60 ${
                   status === "recording"
                     ? "border-rose-500/60 bg-rose-500/10 shadow-[0_0_24px_rgba(244,63,94,0.25)]"
                     : "border-emerald-500/30 bg-emerald-500/[0.04] hover:border-emerald-400 hover:bg-emerald-500/10 hover:shadow-[0_0_24px_rgba(52,211,153,0.25)]"
@@ -385,7 +387,7 @@ function Home() {
               >
                 {status === "recording" ? (
                   <>
-                    <Square className="h-6 w-6 animate-pulse text-rose-400" />
+                    <Square aria-hidden="true" className="h-6 w-6 animate-pulse text-rose-400" />
                     <div>
                       <div className="text-sm font-bold uppercase tracking-widest text-rose-300">
                         &gt; stop_capture
@@ -397,7 +399,7 @@ function Home() {
                   </>
                 ) : (
                   <>
-                    <Mic className="h-6 w-6 text-emerald-300 group-hover:animate-pulse" />
+                    <Mic aria-hidden="true" className="h-6 w-6 text-emerald-300 group-hover:animate-pulse" />
                     <div>
                       <div className="text-sm font-bold uppercase tracking-widest text-emerald-200">
                         &gt; live_capture --mic
@@ -411,11 +413,11 @@ function Home() {
               </button>
 
               <label
-                className={`group flex cursor-pointer items-center justify-center gap-3 rounded-md border border-cyan-400/30 bg-cyan-400/[0.03] px-6 py-8 text-left font-mono transition hover:border-cyan-300 hover:bg-cyan-400/10 hover:shadow-[0_0_24px_rgba(103,232,249,0.25)] ${
+                className={`group flex cursor-pointer items-center justify-center gap-3 rounded-md border border-cyan-400/30 bg-cyan-400/[0.03] px-6 py-8 text-left font-mono transition hover:border-cyan-300 hover:bg-cyan-400/10 hover:shadow-[0_0_24px_rgba(103,232,249,0.25)] focus-within:ring-2 focus-within:ring-cyan-300 focus-within:ring-offset-2 focus-within:ring-offset-black ${
                   status === "analyzing" ? "pointer-events-none opacity-60" : ""
                 }`}
               >
-                <Upload className="h-6 w-6 text-cyan-300" />
+                <Upload aria-hidden="true" className="h-6 w-6 text-cyan-300" />
                 <div>
                   <div className="text-sm font-bold uppercase tracking-widest text-cyan-200">
                     &gt; upload_payload
@@ -427,7 +429,9 @@ function Home() {
                 <input
                   type="file"
                   accept="audio/*"
-                  className="hidden"
+                  aria-label="Upload audio file for forensic analysis"
+                  disabled={status === "analyzing"}
+                  className="sr-only"
                   onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) handleUpload(f);
@@ -438,15 +442,20 @@ function Home() {
 
             {audioUrl && (
               <div className="mt-4 rounded border border-emerald-500/20 bg-black/50 p-2">
-                <audio src={audioUrl} controls className="w-full" />
+                <audio src={audioUrl} controls aria-label="Uploaded or recorded audio playback" className="w-full" />
               </div>
             )}
 
             {status === "analyzing" && (
-              <div className="mt-6 rounded border border-emerald-500/30 bg-black/40 p-4 font-mono text-xs">
+              <div
+                className="mt-6 rounded border border-emerald-500/30 bg-black/40 p-4 font-mono text-xs"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+              >
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-emerald-300">
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
                     <span className="glow-emerald">[ pipeline ]</span>
                     <span className="text-emerald-400/80">
                       running specialists · deepfake · human · anti-spoof · lingua · generalist…
@@ -456,18 +465,29 @@ function Home() {
                     size="sm"
                     variant="outline"
                     onClick={cancelAnalysis}
-                    className="h-7 border-rose-500/40 bg-rose-500/10 px-2 text-[10px] uppercase tracking-wider text-rose-200 hover:bg-rose-500/20"
+                    aria-label="Cancel running analysis"
+                    className="h-7 border-rose-500/40 bg-rose-500/10 px-2 text-[10px] uppercase tracking-wider text-rose-200 hover:bg-rose-500/20 focus-visible:ring-2 focus-visible:ring-rose-400"
                   >
-                    <Square className="mr-1 h-3 w-3" /> cancel
+                    <Square aria-hidden="true" className="mr-1 h-3 w-3" /> cancel
                   </Button>
                 </div>
-                <Progress value={progress} className="h-1.5 bg-emerald-950" />
+                <div
+                  role="progressbar"
+                  aria-label="Analysis progress"
+                  aria-valuenow={progress}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuetext={`${progress}% — ${progress < 30 ? "encoding audio" : progress < 60 ? "querying gateway" : progress < 90 ? "fusing ensemble" : "finalising verdict"}`}
+                >
+                  <Progress value={progress} className="h-1.5 bg-emerald-950" />
+                </div>
                 <div className="mt-2 flex justify-between text-[10px] text-emerald-500/70">
                   <span>progress: {progress}% · {progress < 30 ? "encoding audio" : progress < 60 ? "querying gateway" : progress < 90 ? "fusing ensemble" : "finalising verdict"}</span>
                   <span>press cancel to abort</span>
                 </div>
               </div>
             )}
+
           </div>
         </div>
 
