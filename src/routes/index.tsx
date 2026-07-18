@@ -395,7 +395,7 @@ function Home() {
               voxguard@shell — capture.sh {status === "recording" ? "[REC ●]" : status === "analyzing" ? "[SCAN ~]" : "[READY]"}
             </span>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <button
                 type="button"
