@@ -437,6 +437,11 @@ function Home() {
           <SpeakerVerificationCard />
         </div>
 
+        <section className="mt-10 grid gap-6 lg:grid-cols-2">
+          <LiveStreamMonitor />
+          <ThreatDashboard />
+        </section>
+
         {report && (
           <section className="mt-10 space-y-6">
             <VerdictCard report={report} onReset={reset} />
