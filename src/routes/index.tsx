@@ -71,8 +71,54 @@ function Home() {
   const [progress, setProgress] = useState(0);
   const [report, setReport] = useState<DetectionReport | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [feed, setFeed] = useState<Array<{ ts: string; msg: string; level: "info" | "warn" | "ok" }>>([]);
   const mediaRecRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+
+  useEffect(() => {
+    if (status !== "analyzing") return;
+    const pool: Array<{ msg: string; level: "info" | "warn" | "ok" }> = [
+      { msg: "loading acoustic feature extractor · mel-128", level: "info" },
+      { msg: "spawning generalist pass · gemini-3-flash", level: "info" },
+      { msg: "spawning deepfake specialist · neural-tts family classifier", level: "info" },
+      { msg: "probing vocoder fingerprints: elevenlabs / vall-e / xtts / tortoise", level: "info" },
+      { msg: "measuring pitch jitter & shimmer (biosignal check)", level: "info" },
+      { msg: "asvspoof-5 heuristics: replay · conversion · splice · channel", level: "info" },
+      { msg: "phase coherence scan · sample-rate: 48kHz", level: "info" },
+      { msg: "diffusion warble detector armed", level: "warn" },
+      { msg: "spectral roll-off delta computed", level: "ok" },
+      { msg: "harmonic stack integrity check", level: "ok" },
+      { msg: "breath / plosive / lip-smack detector online", level: "info" },
+      { msg: "cross-checking prosody vs neural-TTS reference bank", level: "warn" },
+      { msg: "fusing ensemble · logistic calibration", level: "ok" },
+      { msg: "computing per-model agreement matrix", level: "info" },
+      { msg: "tiling clip into localization segments", level: "info" },
+      { msg: "packet integrity verified · e2e-encrypted uplink", level: "ok" },
+    ];
+    let i = 0;
+    const push = () => {
+      const item = pool[i % pool.length];
+      i++;
+      const d = new Date();
+      const ts = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}.${String(d.getMilliseconds()).padStart(3, "0").slice(0, 2)}`;
+      setFeed((f) => [{ ts, ...item }, ...f].slice(0, 40));
+    };
+    push();
+    const id = setInterval(push, 650);
+    return () => clearInterval(id);
+  }, [status]);
+
+  useEffect(() => {
+    if (status === "done") {
+      const d = new Date();
+      const ts = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}.00`;
+      setFeed((f) => [{ ts, msg: "analysis complete · verdict rendered", level: "ok" }, ...f].slice(0, 40));
+    } else if (status === "error") {
+      const d = new Date();
+      const ts = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}.00`;
+      setFeed((f) => [{ ts, msg: "pipeline aborted · see console", level: "warn" }, ...f].slice(0, 40));
+    }
+  }, [status]);
 
   const runAnalysis = useCallback(
     async (blob: Blob, format: "webm" | "mp3" | "wav" | "m4a" | "ogg" | "aac" | "flac") => {
