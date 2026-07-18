@@ -16,7 +16,9 @@ import {
   AlertTriangle,
   Cpu,
   Fingerprint,
+  Download,
 } from "lucide-react";
+import { downloadReportPdf } from "@/lib/report-pdf";
 import { Button } from "@/components/ui/button";
 import { AudioWaveform } from "@/components/AudioWaveform";
 import { Progress } from "@/components/ui/progress";
