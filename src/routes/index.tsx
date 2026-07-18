@@ -248,7 +248,7 @@ function Home() {
       {/* Live console feed — active during analysis */}
       {(status === "analyzing" || feed.length > 0) && (
         <div className="relative z-10 border-b border-emerald-500/10 bg-black/60">
-          <div className="mx-auto max-w-6xl px-6 py-2">
+          <div className="mx-auto max-w-6xl px-3 py-2 sm:px-6">
             <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-500/60">
               <span className="flex items-center gap-2">
                 <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${status === "analyzing" ? "animate-pulse bg-emerald-400 shadow-[0_0_8px_#34d399]" : "bg-emerald-700"}`} />
