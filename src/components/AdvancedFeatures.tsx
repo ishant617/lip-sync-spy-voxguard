@@ -394,31 +394,67 @@ export function AdversarialLab({
 }: {
   audioUrl: string | null;
   baselineAi: number;
-  runAnalyze: (blob: Blob, format: "wav") => Promise<DetectionReport>;
+  runAnalyze: (blob: Blob, format: "wav", signal?: AbortSignal) => Promise<DetectionReport>;
 }) {
   const [running, setRunning] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [batch, setBatch] = useState<{ done: number; total: number } | null>(null);
   const [results, setResults] = useState<Record<string, { ai: number; delta: number }>>({});
+  const abortRef = useRef<AbortController | null>(null);
+  const batchAbortedRef = useRef(false);
+
+  const cancel = () => {
+    batchAbortedRef.current = true;
+    abortRef.current?.abort();
+  };
+
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const runAttack = async (attack: Attack) => {
     if (!audioUrl) return;
+    const controller = new AbortController();
+    abortRef.current = controller;
     setRunning(attack.key);
+    setProgress(5);
+    const tick = setInterval(() => setProgress((p) => Math.min(90, p + 5)), 350);
     try {
-      const arr = await (await fetch(audioUrl)).arrayBuffer();
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const arr = await (await fetch(audioUrl, { signal: controller.signal })).arrayBuffer();
+      if (controller.signal.aborted) throw new DOMException("Aborted", "AbortError");
+      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       const decoded = await ctx.decodeAudioData(arr.slice(0));
       await ctx.close();
+      if (controller.signal.aborted) throw new DOMException("Aborted", "AbortError");
 
       const processed = await applyAttack(decoded, attack.key);
       const wav = encodeWav(processed);
-      const report = await runAnalyze(wav, "wav");
+      const report = await runAnalyze(wav, "wav", controller.signal);
+      if (controller.signal.aborted) throw new DOMException("Aborted", "AbortError");
       const delta = report.aiVoiceScore - baselineAi;
       setResults((r) => ({ ...r, [attack.key]: { ai: report.aiVoiceScore, delta } }));
+      setProgress(100);
     } catch (e) {
-      console.error(e);
-      setResults((r) => ({ ...r, [attack.key]: { ai: -1, delta: 0 } }));
+      if ((e as { name?: string })?.name !== "AbortError") {
+        console.error(e);
+        setResults((r) => ({ ...r, [attack.key]: { ai: -1, delta: 0 } }));
+      }
     } finally {
+      clearInterval(tick);
       setRunning(null);
+      setProgress(0);
+      if (abortRef.current === controller) abortRef.current = null;
     }
+  };
+
+  const runAll = async () => {
+    if (!audioUrl) return;
+    batchAbortedRef.current = false;
+    setBatch({ done: 0, total: ATTACKS.length });
+    for (let i = 0; i < ATTACKS.length; i++) {
+      if (batchAbortedRef.current) break;
+      await runAttack(ATTACKS[i]);
+      setBatch({ done: i + 1, total: ATTACKS.length });
+    }
+    setBatch(null);
   };
 
   const robustness = useMemo(() => {
@@ -431,21 +467,67 @@ export function AdversarialLab({
 
   return (
     <Card className="border-purple-500/30 bg-purple-500/[0.03] p-6">
-      <div className="mb-4 flex items-center gap-3">
-        <div className="rounded-md bg-purple-500/15 p-2 text-purple-300">
-          <FlaskConical className="h-5 w-5" />
-        </div>
-        <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-purple-400/80">
-            adversarial_lab // model_robustness_test
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="rounded-md bg-purple-500/15 p-2 text-purple-300">
+            <FlaskConical className="h-5 w-5" />
           </div>
-          <h3 className="text-lg font-bold text-slate-50">Adversarial stress-test lab</h3>
-          <p className="text-xs text-slate-400">
-            Apply attacks to the analyzed clip and re-run detection. Small deltas =
-            robust model.
-          </p>
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-purple-400/80">
+              adversarial_lab // model_robustness_test
+            </div>
+            <h3 className="text-lg font-bold text-slate-50">Adversarial stress-test lab</h3>
+            <p className="text-xs text-slate-400">
+              Apply attacks to the analyzed clip and re-run detection. Small deltas =
+              robust model.
+            </p>
+          </div>
         </div>
+        {audioUrl && (
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              onClick={runAll}
+              disabled={running !== null || batch !== null}
+              className="h-8 bg-purple-500 text-slate-950 hover:bg-purple-400"
+            >
+              <Zap className="mr-1 h-3.5 w-3.5" /> Run all
+            </Button>
+            {(running !== null || batch !== null) && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={cancel}
+                className="h-8 border-rose-500/40 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20"
+              >
+                <Square className="mr-1 h-3.5 w-3.5" /> Cancel
+              </Button>
+            )}
+          </div>
+        )}
       </div>
+
+      {(running !== null || batch !== null) && (
+        <div className="mb-4 rounded-md border border-purple-500/30 bg-black/40 p-3 font-mono text-xs">
+          <div className="mb-1.5 flex items-center justify-between text-purple-200">
+            <span className="flex items-center gap-1.5">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              {batch
+                ? `batch · ${batch.done}/${batch.total} · ${running ?? "queued"}`
+                : `running · ${running}`}
+            </span>
+            <span className="text-purple-300/80">
+              {batch
+                ? `${Math.round((batch.done / batch.total) * 100)}%`
+                : `${progress}%`}
+            </span>
+          </div>
+          <Progress
+            value={batch ? (batch.done / batch.total) * 100 : progress}
+            className="h-1.5 bg-purple-950"
+          />
+        </div>
+      )}
 
       {!audioUrl ? (
         <div className="rounded border border-white/5 bg-black/40 p-4 text-xs text-slate-400">
