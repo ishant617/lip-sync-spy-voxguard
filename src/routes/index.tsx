@@ -81,6 +81,7 @@ function Home() {
   const [feed, setFeed] = useState<Array<{ ts: string; msg: string; level: "info" | "warn" | "ok" }>>([]);
   const mediaRecRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (status !== "analyzing") return;
