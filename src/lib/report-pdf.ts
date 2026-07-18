@@ -244,6 +244,73 @@ export function generateReportPdf(report: DetectionReport): Blob {
     p(ctx, report.transcript, { size: 9 });
   }
 
+  // Legend & methodology (one page)
+  doc.addPage();
+  ctx.y = M;
+  h1(ctx, "Legend & methodology");
+  p(ctx, "Use this reference to interpret every score, chip label, and verdict shown throughout this report. All numeric scores are 0–100 unless noted.", { size: 9, color: [80, 80, 100] });
+
+  h2(ctx, "Risk score bands");
+  const bands: Array<[string, [number, number, number], string]> = [
+    ["Low (0–39)", [50, 170, 100], "Little to no evidence of the measured risk."],
+    ["Elevated (40–64)", [230, 170, 40], "Mixed or ambiguous signals — reviewer judgement advised."],
+    ["High (65–100)", [220, 60, 80], "Strong evidence of the measured risk."],
+  ];
+  for (const [label, color, desc] of bands) {
+    ensure(ctx, 6);
+    doc.setFillColor(...color).rect(M, ctx.y - 3, 3, 4, "F");
+    doc.setFont("helvetica", "bold").setFontSize(9).setTextColor(20, 20, 30);
+    doc.text(label, M + 6, ctx.y);
+    doc.setFont("helvetica", "normal").setTextColor(60, 60, 80);
+    doc.text(desc, M + 46, ctx.y);
+    ctx.y += 5;
+  }
+
+  h2(ctx, "Score definitions");
+  kv(ctx, "AI-voice score", "Fused likelihood that the clip is synthetic. Weighted: deepfake specialist 50%, human verifier (inverted) 30%, generalist AI detector 20%.");
+  kv(ctx, "Fraud-intent score", "Likelihood the content shows social-engineering / fraud patterns (urgency, impersonation, credential/payment asks), independent of synthesis.");
+  kv(ctx, "Model confidence", "How internally consistent the generalist model's findings are for this clip. Not a probability of correctness.");
+  kv(ctx, "Human likelihood", "Deepfake specialist's estimate that the voice is a real human recording, from its perspective only.");
+  kv(ctx, "Ensemble confidence", "Agreement across the three specialists on the AI-vs-human axis. High = low variance between models; low = they disagree.");
+  kv(ctx, "Segment score", "Per-segment suspicion (0–100). Tiles the whole clip so partial deepfakes / splices are localised.");
+
+  h2(ctx, "Chip labels");
+  const chips: Array<[string, [number, number, number], string]> = [
+    ["LOW", [90, 130, 180], "Finding is minor or informational."],
+    ["MEDIUM", [230, 170, 40], "Notable finding — corroborate with other signals."],
+    ["HIGH", [220, 60, 80], "Strong forensic indicator on its own."],
+    ["HUMAN", [50, 170, 100], "Segment reads as authentic human speech."],
+    ["SUSPICIOUS", [230, 170, 40], "Segment shows ambiguous or mixed cues."],
+    ["SYNTHETIC", [220, 60, 80], "Segment reads as AI-generated / voice-cloned."],
+  ];
+  for (const [label, color, desc] of chips) {
+    ensure(ctx, 6);
+    chip(ctx, M, ctx.y, label, color);
+    doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(60, 60, 80);
+    doc.text(desc, M + 34, ctx.y);
+    ctx.y += 5;
+  }
+
+  h2(ctx, "Voice-origin verdict methodology");
+  p(ctx, "Three independent specialist passes analyse the audio in parallel:", { size: 9, color: [60, 60, 80] });
+  kv(ctx, "1. Generalist AI", "Broad AI-voice detector looking at acoustic + linguistic patterns together.");
+  kv(ctx, "2. Deepfake specialist", "Fine-tuned pass focused on neural-TTS families, vocoder fingerprints, and per-segment localisation.");
+  kv(ctx, "3. Human verifier", "Looks for positive human biosignals (breath, lip smacks, pitch jitter, room tone) rather than synthesis artifacts.");
+  p(ctx, "Their scores are placed on a common AI-likelihood axis (human score is inverted) and fused with weights 50 / 30 / 20 (specialist / human / generalist). The ensemble confidence is derived from the standard deviation across the three — tight agreement raises confidence, disagreement lowers it.", { size: 9, color: [60, 60, 80] });
+  p(ctx, "Origin label rules:", { size: 9, color: [80, 80, 100] });
+  kv(ctx, "AI", "Fused AI score ≥ 65 and ensemble confidence ≥ 55.");
+  kv(ctx, "Human", "Fused AI score ≤ 30 and ensemble confidence ≥ 55.");
+  kv(ctx, "Uncertain", "All other cases — the models disagree or the clip sits in the ambiguous band.");
+
+  h2(ctx, "Overall verdict rules");
+  kv(ctx, "Likely fraud", "AI-voice ≥ 65 and fraud-intent ≥ 55.");
+  kv(ctx, "AI-synthesized", "AI-voice ≥ 65 (fraud intent below threshold).");
+  kv(ctx, "Suspicious", "Fraud-intent ≥ 55, or AI-voice ≥ 45.");
+  kv(ctx, "Authentic", "None of the above thresholds met.");
+
+  p(ctx, "This report is a decision-support tool for human reviewers. It is not a legal determination and should be corroborated with metadata, provenance, and context before action.", { size: 8, italic: true, color: [120, 120, 140] });
+
+
   // Appendix — Evidence ↔ segment map
   if (report.supportingEvidence.length) {
     doc.addPage();
