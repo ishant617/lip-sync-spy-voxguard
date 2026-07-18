@@ -214,7 +214,7 @@ function Home() {
   };
 
   return (
-    <div className="hacker-bg scanlines relative min-h-screen text-emerald-50">
+    <div className="hacker-bg scanlines relative min-h-dvh text-emerald-50">
       <div className="scanlines-overlay" />
       <Toaster theme="dark" />
       <TwoFactorModal open={tfaOpen} onClose={() => setTfaOpen(false)} />
