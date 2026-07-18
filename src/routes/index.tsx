@@ -606,7 +606,7 @@ function VoiceOriginCard({
         <div className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
           Model agreement (AI-likelihood axis, lower = more human)
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <AgreementPill label="Generalist" value={origin.agreement.generalistAi} />
           <AgreementPill
             label="Deepfake specialist"
@@ -615,6 +615,10 @@ function VoiceOriginCard({
           <AgreementPill
             label="Human verifier"
             value={100 - origin.agreement.humanVerifier}
+          />
+          <AgreementPill
+            label="Anti-spoofing"
+            value={origin.agreement.antiSpoofing}
           />
         </div>
       </div>
