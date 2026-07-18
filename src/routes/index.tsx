@@ -45,6 +45,7 @@ import {
   ThreatDashboard,
   saveHistoryEntry,
 } from "@/components/AdvancedFeatures";
+import { TwoFactorButton, TwoFactorModal } from "@/components/TwoFactorAuth";
 import { User, CheckCircle2, XCircle, HelpCircle, Radio } from "lucide-react";
 
 
@@ -78,6 +79,7 @@ function Home() {
   const { user, isLoading: authLoading, signInWithGoogle, signOut } = useAuth();
   const [status, setStatus] = useState<Status>("idle");
   const [progress, setProgress] = useState(0);
+  const [tfaOpen, setTfaOpen] = useState(false);
   const [report, setReport] = useState<DetectionReport | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [feed, setFeed] = useState<Array<{ ts: string; msg: string; level: "info" | "warn" | "ok" }>>([]);
@@ -215,6 +217,7 @@ function Home() {
     <div className="hacker-bg scanlines relative min-h-screen text-emerald-50">
       <div className="scanlines-overlay" />
       <Toaster theme="dark" />
+      <TwoFactorModal open={tfaOpen} onClose={() => setTfaOpen(false)} />
 
       {/* Top status bar */}
       <div className="relative z-10 border-b border-emerald-500/15 bg-black/40 backdrop-blur">
@@ -312,6 +315,7 @@ function Home() {
                 <span className="hidden sm:inline font-mono text-xs text-emerald-300/80">
                   {user.displayName ?? user.email ?? user.id.slice(0, 8)}
                 </span>
+                <TwoFactorButton onOpen={() => setTfaOpen(true)} />
                 <button
                   type="button"
                   onClick={signOut}
