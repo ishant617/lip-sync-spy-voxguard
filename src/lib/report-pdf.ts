@@ -175,7 +175,7 @@ export function generateReportPdf(report: DetectionReport): Blob {
       ensure(ctx, 8);
       doc.setFont("helvetica", "bold").setFontSize(9).setTextColor(20, 20, 30);
       doc.text(`• ${a.name}`, M, ctx.y);
-      chip(ctx, PAGE_W - M - 20, ctx.y, `${a.confidence}%`, [100, 100, 130]);
+      chip(ctx, PAGE_W - M - 20, ctx.y, a.severity.toUpperCase(), sevColor(a.severity));
       ctx.y += 4;
       p(ctx, a.detail, { size: 8, color: [90, 95, 115] });
     }
