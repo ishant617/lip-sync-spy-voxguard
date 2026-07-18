@@ -130,27 +130,43 @@ function Home() {
 
   const runAnalysis = useCallback(
     async (blob: Blob, format: "webm" | "mp3" | "wav" | "m4a" | "ogg" | "aac" | "flac") => {
+      const controller = new AbortController();
+      abortRef.current?.abort();
+      abortRef.current = controller;
       setStatus("analyzing");
       setReport(null);
       setProgress(8);
       const tick = setInterval(() => setProgress((p) => Math.min(92, p + 6)), 500);
       try {
         const base64 = await blobToBase64(blob);
-        const result = await analyze({ data: { audioBase64: base64, format } });
+        if (controller.signal.aborted) throw new DOMException("Aborted", "AbortError");
+        const result = await analyze({ data: { audioBase64: base64, format }, signal: controller.signal } as never);
+        if (controller.signal.aborted) throw new DOMException("Aborted", "AbortError");
         setReport(result);
         saveHistoryEntry(result);
         setProgress(100);
         setStatus("done");
       } catch (e) {
-        console.error(e);
-        toast.error(e instanceof Error ? e.message : "Analysis failed");
-        setStatus("error");
+        if ((e as { name?: string })?.name === "AbortError" || controller.signal.aborted) {
+          toast.message("Analysis cancelled");
+          setStatus("idle");
+          setProgress(0);
+        } else {
+          console.error(e);
+          toast.error(e instanceof Error ? e.message : "Analysis failed");
+          setStatus("error");
+        }
       } finally {
         clearInterval(tick);
+        if (abortRef.current === controller) abortRef.current = null;
       }
     },
     [analyze],
   );
+
+  const cancelAnalysis = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
 
   const startRecording = async () => {
     try {
