@@ -394,31 +394,67 @@ export function AdversarialLab({
 }: {
   audioUrl: string | null;
   baselineAi: number;
-  runAnalyze: (blob: Blob, format: "wav") => Promise<DetectionReport>;
+  runAnalyze: (blob: Blob, format: "wav", signal?: AbortSignal) => Promise<DetectionReport>;
 }) {
   const [running, setRunning] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [batch, setBatch] = useState<{ done: number; total: number } | null>(null);
   const [results, setResults] = useState<Record<string, { ai: number; delta: number }>>({});
+  const abortRef = useRef<AbortController | null>(null);
+  const batchAbortedRef = useRef(false);
+
+  const cancel = () => {
+    batchAbortedRef.current = true;
+    abortRef.current?.abort();
+  };
+
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const runAttack = async (attack: Attack) => {
     if (!audioUrl) return;
+    const controller = new AbortController();
+    abortRef.current = controller;
     setRunning(attack.key);
+    setProgress(5);
+    const tick = setInterval(() => setProgress((p) => Math.min(90, p + 5)), 350);
     try {
-      const arr = await (await fetch(audioUrl)).arrayBuffer();
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const arr = await (await fetch(audioUrl, { signal: controller.signal })).arrayBuffer();
+      if (controller.signal.aborted) throw new DOMException("Aborted", "AbortError");
+      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       const decoded = await ctx.decodeAudioData(arr.slice(0));
       await ctx.close();
+      if (controller.signal.aborted) throw new DOMException("Aborted", "AbortError");
 
       const processed = await applyAttack(decoded, attack.key);
       const wav = encodeWav(processed);
-      const report = await runAnalyze(wav, "wav");
+      const report = await runAnalyze(wav, "wav", controller.signal);
+      if (controller.signal.aborted) throw new DOMException("Aborted", "AbortError");
       const delta = report.aiVoiceScore - baselineAi;
       setResults((r) => ({ ...r, [attack.key]: { ai: report.aiVoiceScore, delta } }));
+      setProgress(100);
     } catch (e) {
-      console.error(e);
-      setResults((r) => ({ ...r, [attack.key]: { ai: -1, delta: 0 } }));
+      if ((e as { name?: string })?.name !== "AbortError") {
+        console.error(e);
+        setResults((r) => ({ ...r, [attack.key]: { ai: -1, delta: 0 } }));
+      }
     } finally {
+      clearInterval(tick);
       setRunning(null);
+      setProgress(0);
+      if (abortRef.current === controller) abortRef.current = null;
     }
+  };
+
+  const runAll = async () => {
+    if (!audioUrl) return;
+    batchAbortedRef.current = false;
+    setBatch({ done: 0, total: ATTACKS.length });
+    for (let i = 0; i < ATTACKS.length; i++) {
+      if (batchAbortedRef.current) break;
+      await runAttack(ATTACKS[i]);
+      setBatch({ done: i + 1, total: ATTACKS.length });
+    }
+    setBatch(null);
   };
 
   const robustness = useMemo(() => {
