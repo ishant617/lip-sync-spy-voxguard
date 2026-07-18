@@ -555,15 +555,28 @@ export const analyzeVoice = createServerFn({ method: "POST" })
         biosignals: human.biosignals ?? [],
         notes: human.notes ?? "",
       },
+      antiSpoofing: {
+        spoofScore,
+        livenessScore,
+        attackVectors: (antispoof.attackVectors ?? []).map((v) => ({
+          name: v.name,
+          score: clamp(v.score),
+          detail: v.detail,
+        })),
+        channelProfile: antispoof.channelProfile ?? "",
+        notes: antispoof.notes ?? "",
+      },
       voiceOrigin: {
         label: originLabel,
         confidence: originConfidence,
         aiScore: aiVoiceScore,
         humanScore: 100 - aiVoiceScore,
+        calibratedAiProbability,
         agreement: {
           generalistAi: generalistScore,
           specialistDeepfake: specialistScore,
           humanVerifier: humanScore,
+          antiSpoofing: Math.max(synthesisAttack, livenessAsAi),
         },
       },
 
