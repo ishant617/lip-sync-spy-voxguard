@@ -112,7 +112,7 @@ function Home() {
     if (status === "done") {
       const d = new Date();
       const ts = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}.00`;
-      setFeed((f) => [{ ts, msg: "analysis complete · verdict rendered", level: "ok" }, ...f].slice(0, 40));
+      setFeed((f) => [{ ts, msg: "analysis complete · verdict rendered", level: "ok" as const }, ...f].slice(0, 40));
     } else if (status === "error") {
       const d = new Date();
       const ts = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}.00`;
