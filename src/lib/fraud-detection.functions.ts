@@ -98,6 +98,7 @@ export type DetectionReport = {
   supportingEvidence: Evidence[];
   deepfakeAnalysis: DeepfakeAnalysis;
   humanVerifier: HumanVerifier;
+  antiSpoofing: AntiSpoofingAnalysis;
   voiceOrigin: VoiceOrigin;
   verdict: "authentic" | "suspicious" | "likely_fraud" | "ai_synthesized";
   headline: string;
