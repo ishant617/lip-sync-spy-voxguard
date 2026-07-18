@@ -116,7 +116,7 @@ function Home() {
     } else if (status === "error") {
       const d = new Date();
       const ts = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}.00`;
-      setFeed((f) => [{ ts, msg: "pipeline aborted · see console", level: "warn" }, ...f].slice(0, 40));
+      setFeed((f) => [{ ts, msg: "pipeline aborted · see console", level: "warn" as const }, ...f].slice(0, 40));
     }
   }, [status]);
 
