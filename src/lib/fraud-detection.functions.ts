@@ -64,12 +64,29 @@ export type VoiceOrigin = {
   confidence: number;
   aiScore: number;
   humanScore: number;
+  calibratedAiProbability: number;
   agreement: {
     generalistAi: number;
     specialistDeepfake: number;
     humanVerifier: number;
+    antiSpoofing: number;
   };
 };
+
+export type AttackVector = {
+  name: string;
+  score: number;
+  detail: string;
+};
+
+export type AntiSpoofingAnalysis = {
+  spoofScore: number;
+  livenessScore: number;
+  attackVectors: AttackVector[];
+  channelProfile: string;
+  notes: string;
+};
+
 
 export type DetectionReport = {
   transcript: string;
