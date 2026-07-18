@@ -603,13 +603,13 @@ function VerdictCard({
   const Icon = style.icon;
   return (
     <Card className={`overflow-hidden border p-0 ${style.card}`}>
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/5 p-6">
-        <div className="flex items-start gap-4">
-          <div className={`rounded-xl p-3 ${style.iconWrap}`}>
-            <Icon className="h-7 w-7" />
+      <div className="flex flex-col gap-4 border-b border-white/5 p-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:p-6">
+        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+          <div className={`shrink-0 rounded-xl p-3 ${style.iconWrap}`}>
+            <Icon className="h-6 w-6 sm:h-7 sm:w-7" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                 Verdict
               </span>
@@ -619,7 +619,7 @@ function VerdictCard({
                 {style.label}
               </span>
             </div>
-            <h2 className="mt-1 text-2xl font-bold text-slate-50">
+            <h2 className="mt-1 text-xl font-bold text-slate-50 sm:text-2xl">
               {report.headline}
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-slate-300">
@@ -633,21 +633,21 @@ function VerdictCard({
             </div>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 sm:shrink-0">
           <Button
             onClick={() => downloadReportPdf(report)}
-            className="bg-emerald-500 text-slate-950 hover:bg-emerald-400"
+            className="flex-1 bg-emerald-500 text-slate-950 hover:bg-emerald-400 sm:flex-none"
           >
             <Download className="mr-1.5 h-4 w-4" />
             Export PDF
           </Button>
-          <Button variant="outline" onClick={onReset} className="border-white/20">
+          <Button variant="outline" onClick={onReset} className="flex-1 border-white/20 sm:flex-none">
             New analysis
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-6 border-b border-white/5 p-6 sm:grid-cols-2">
+      <div className="grid gap-6 border-b border-white/5 p-4 sm:grid-cols-2 sm:p-6">
         <ScoreBar
           label="AI / synthetic-voice likelihood"
           value={report.aiVoiceScore}
