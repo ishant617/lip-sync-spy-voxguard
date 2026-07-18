@@ -214,14 +214,14 @@ function Home() {
   };
 
   return (
-    <div className="hacker-bg scanlines relative min-h-screen text-emerald-50">
+    <div className="hacker-bg scanlines relative min-h-dvh text-emerald-50">
       <div className="scanlines-overlay" />
       <Toaster theme="dark" />
       <TwoFactorModal open={tfaOpen} onClose={() => setTfaOpen(false)} />
 
       {/* Top status bar */}
       <div className="relative z-10 border-b border-emerald-500/15 bg-black/40 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-emerald-400/80">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.15em] text-emerald-400/80 sm:px-6 sm:text-[11px] sm:tracking-[0.18em]">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
@@ -248,7 +248,7 @@ function Home() {
       {/* Live console feed — active during analysis */}
       {(status === "analyzing" || feed.length > 0) && (
         <div className="relative z-10 border-b border-emerald-500/10 bg-black/60">
-          <div className="mx-auto max-w-6xl px-6 py-2">
+          <div className="mx-auto max-w-6xl px-3 py-2 sm:px-6">
             <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-500/60">
               <span className="flex items-center gap-2">
                 <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${status === "analyzing" ? "animate-pulse bg-emerald-400 shadow-[0_0_8px_#34d399]" : "bg-emerald-700"}`} />
@@ -292,47 +292,48 @@ function Home() {
 
 
       <header className="relative z-10 border-b border-emerald-500/15 bg-gradient-to-b from-black/60 to-transparent backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-md border border-emerald-400/40 bg-emerald-500/10 shadow-[0_0_24px_rgba(52,211,153,0.35)]">
+        <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-4 sm:flex sm:px-6 sm:py-5">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-emerald-400/40 bg-emerald-500/10 shadow-[0_0_24px_rgba(52,211,153,0.35)]">
               <ShieldCheck className="h-5 w-5 text-emerald-300" />
             </div>
-            <div className="leading-tight">
-              <div className="font-mono text-lg font-bold tracking-wider text-emerald-200 glow-emerald">
+            <div className="min-w-0 leading-tight">
+              <div className="truncate font-mono text-base font-bold tracking-wider text-emerald-200 glow-emerald sm:text-lg">
                 VOX//GUARD
               </div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-emerald-500/70">
+              <div className="truncate font-mono text-[9px] uppercase tracking-[0.25em] text-emerald-500/70 sm:text-[10px] sm:tracking-[0.3em]">
                 offensive_audio_forensics
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:ml-auto sm:gap-3">
             {authLoading ? (
-              <span className="font-mono text-xs text-emerald-500/60">auth::initializing</span>
+              <span className="font-mono text-xs text-emerald-500/60">auth::init</span>
             ) : user ? (
-              <div className="flex items-center gap-3">
-                <span className="hidden sm:inline font-mono text-xs text-emerald-300/80">
+              <>
+                <span className="hidden max-w-[160px] truncate font-mono text-xs text-emerald-300/80 md:inline">
                   {user.displayName ?? user.email ?? user.id.slice(0, 8)}
                 </span>
                 <TwoFactorButton onOpen={() => setTfaOpen(true)} />
                 <button
                   type="button"
                   onClick={signOut}
-                  className="rounded border border-emerald-500/30 bg-emerald-500/5 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-emerald-300 transition hover:border-rose-400 hover:bg-rose-500/10 hover:text-rose-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  className="rounded border border-emerald-500/30 bg-emerald-500/5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-emerald-300 transition hover:border-rose-400 hover:bg-rose-500/10 hover:text-rose-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-xs"
                   aria-label="Sign out"
                 >
                   &gt; sign_out
                 </button>
-              </div>
+              </>
             ) : (
               <button
                 type="button"
                 onClick={signInWithGoogle}
-                className="rounded border border-emerald-500/30 bg-emerald-500/5 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-emerald-300 transition hover:border-emerald-400 hover:bg-emerald-500/15 hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                className="rounded border border-emerald-500/30 bg-emerald-500/5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest text-emerald-300 transition hover:border-emerald-400 hover:bg-emerald-500/15 hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-xs"
                 aria-label="Sign in with Google"
               >
-                &gt; sign_in_with_google
+                <span className="sm:hidden">&gt; sign_in</span>
+                <span className="hidden sm:inline">&gt; sign_in_with_google</span>
               </button>
             )}
           </div>
@@ -355,9 +356,9 @@ function Home() {
         </div>
       </div>
 
-      <main className="relative z-10 mx-auto max-w-6xl px-6 py-12">
+      <main className="relative z-10 mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
         <section className="mb-10">
-          <h1 className="max-w-3xl font-mono text-4xl font-bold leading-tight tracking-tight text-emerald-100 sm:text-5xl">
+          <h1 className="max-w-3xl font-mono text-3xl font-bold leading-tight tracking-tight text-emerald-100 sm:text-5xl">
             <span className="glow-emerald">Intercept</span> synthetic voices
             <br />
             <span className="text-emerald-500/60">// </span>
@@ -394,7 +395,7 @@ function Home() {
               voxguard@shell — capture.sh {status === "recording" ? "[REC ●]" : status === "analyzing" ? "[SCAN ~]" : "[READY]"}
             </span>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <button
                 type="button"
@@ -402,7 +403,7 @@ function Home() {
                 disabled={status === "analyzing"}
                 aria-pressed={status === "recording"}
                 aria-label={status === "recording" ? "Stop microphone capture and analyze" : "Start live microphone capture"}
-                className={`group flex items-center justify-center gap-3 rounded-md border px-6 py-8 text-left font-mono transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:cursor-not-allowed disabled:opacity-60 ${
+                className={`group flex items-center justify-center gap-3 rounded-md border px-4 py-6 text-left font-mono transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:cursor-not-allowed disabled:opacity-60 sm:px-6 sm:py-8 ${
                   status === "recording"
                     ? "border-rose-500/60 bg-rose-500/10 shadow-[0_0_24px_rgba(244,63,94,0.25)]"
                     : "border-emerald-500/30 bg-emerald-500/[0.04] hover:border-emerald-400 hover:bg-emerald-500/10 hover:shadow-[0_0_24px_rgba(52,211,153,0.25)]"
@@ -436,7 +437,7 @@ function Home() {
               </button>
 
               <label
-                className={`group flex cursor-pointer items-center justify-center gap-3 rounded-md border border-cyan-400/30 bg-cyan-400/[0.03] px-6 py-8 text-left font-mono transition hover:border-cyan-300 hover:bg-cyan-400/10 hover:shadow-[0_0_24px_rgba(103,232,249,0.25)] focus-within:ring-2 focus-within:ring-cyan-300 focus-within:ring-offset-2 focus-within:ring-offset-black ${
+                className={`group flex cursor-pointer items-center justify-center gap-3 rounded-md border border-cyan-400/30 bg-cyan-400/[0.03] px-4 py-6 text-left font-mono transition hover:border-cyan-300 hover:bg-cyan-400/10 hover:shadow-[0_0_24px_rgba(103,232,249,0.25)] focus-within:ring-2 focus-within:ring-cyan-300 focus-within:ring-offset-2 focus-within:ring-offset-black sm:px-6 sm:py-8 ${
                   status === "analyzing" ? "pointer-events-none opacity-60" : ""
                 }`}
               >
@@ -602,13 +603,13 @@ function VerdictCard({
   const Icon = style.icon;
   return (
     <Card className={`overflow-hidden border p-0 ${style.card}`}>
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/5 p-6">
-        <div className="flex items-start gap-4">
-          <div className={`rounded-xl p-3 ${style.iconWrap}`}>
-            <Icon className="h-7 w-7" />
+      <div className="flex flex-col gap-4 border-b border-white/5 p-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:p-6">
+        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+          <div className={`shrink-0 rounded-xl p-3 ${style.iconWrap}`}>
+            <Icon className="h-6 w-6 sm:h-7 sm:w-7" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                 Verdict
               </span>
@@ -618,7 +619,7 @@ function VerdictCard({
                 {style.label}
               </span>
             </div>
-            <h2 className="mt-1 text-2xl font-bold text-slate-50">
+            <h2 className="mt-1 text-xl font-bold text-slate-50 sm:text-2xl">
               {report.headline}
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-slate-300">
@@ -632,21 +633,21 @@ function VerdictCard({
             </div>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 sm:shrink-0">
           <Button
             onClick={() => downloadReportPdf(report)}
-            className="bg-emerald-500 text-slate-950 hover:bg-emerald-400"
+            className="flex-1 bg-emerald-500 text-slate-950 hover:bg-emerald-400 sm:flex-none"
           >
             <Download className="mr-1.5 h-4 w-4" />
             Export PDF
           </Button>
-          <Button variant="outline" onClick={onReset} className="border-white/20">
+          <Button variant="outline" onClick={onReset} className="flex-1 border-white/20 sm:flex-none">
             New analysis
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-6 border-b border-white/5 p-6 sm:grid-cols-2">
+      <div className="grid gap-6 border-b border-white/5 p-4 sm:grid-cols-2 sm:p-6">
         <ScoreBar
           label="AI / synthetic-voice likelihood"
           value={report.aiVoiceScore}
@@ -659,7 +660,7 @@ function VerdictCard({
         />
       </div>
 
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
           <AlertTriangle className="h-3.5 w-3.5" />
           Recommended actions
