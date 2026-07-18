@@ -138,106 +138,201 @@ function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100">
+    <div className="hacker-bg scanlines relative min-h-screen text-emerald-50">
+      <div className="scanlines-overlay" />
       <Toaster theme="dark" />
-      <header className="border-b border-white/5 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-6 w-6 text-emerald-400" />
-            <span className="text-lg font-semibold tracking-tight">VoxGuard</span>
+
+      {/* Top status bar */}
+      <div className="relative z-10 border-b border-emerald-500/15 bg-black/40 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-emerald-400/80">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+              secure_channel: <span className="text-emerald-300">online</span>
+            </span>
+            <span className="hidden sm:inline text-emerald-500/50">
+              node: vox-01 · region: eu-central · uplink: e2e-encrypted
+            </span>
+          </div>
+          <span className="hidden md:inline text-emerald-500/60">
+            [ ethical_use_only ] threat_intel: v4.2.0
+          </span>
+        </div>
+      </div>
+
+      <header className="relative z-10 border-b border-emerald-500/15 bg-gradient-to-b from-black/60 to-transparent backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-md border border-emerald-400/40 bg-emerald-500/10 shadow-[0_0_24px_rgba(52,211,153,0.35)]">
+              <ShieldCheck className="h-5 w-5 text-emerald-300" />
+            </div>
+            <div className="leading-tight">
+              <div className="font-mono text-lg font-bold tracking-wider text-emerald-200 glow-emerald">
+                VOX//GUARD
+              </div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-emerald-500/70">
+                offensive_audio_forensics
+              </div>
+            </div>
           </div>
           <a
             href="#how"
-            className="text-sm text-slate-400 transition hover:text-slate-100"
+            className="rounded border border-emerald-500/30 bg-emerald-500/5 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-emerald-300 transition hover:border-emerald-400 hover:bg-emerald-500/15 hover:text-emerald-200"
           >
-            How it works
+            &gt; ./how_it_works
           </a>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-12">
-        <section className="mb-10 text-center">
-          <h1 className="text-balance text-4xl font-bold tracking-tight sm:text-5xl">
-            Detect AI-cloned voices &amp; fraud calls
+      {/* Scrolling threat marquee */}
+      <div className="relative z-10 overflow-hidden border-b border-emerald-500/10 bg-emerald-500/[0.03] py-1.5 font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-400/70">
+        <div className="marquee-track">
+          {Array.from({ length: 2 }).map((_, k) => (
+            <span key={k} className="inline-flex items-center gap-8">
+              <span>◉ elevenlabs_v3 signature indexed</span>
+              <span>◉ vall-e vocoder fingerprint db updated</span>
+              <span>◉ asvspoof-5 replay attack heuristics active</span>
+              <span>◉ xtts diffusion warble detector online</span>
+              <span>◉ pindrop-style channel profiler armed</span>
+              <span>◉ neural-tts family classifier · 12 models</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <main className="relative z-10 mx-auto max-w-6xl px-6 py-12">
+        <section className="mb-10">
+          <div className="mb-3 font-mono text-xs text-emerald-500/80">
+            <span className="text-emerald-400">root@voxguard</span>
+            <span className="text-emerald-600">:~#</span>{" "}
+            <span className="text-emerald-200">./detect --target=audio --mode=forensic</span>
+          </div>
+          <h1 className="max-w-3xl font-mono text-4xl font-bold leading-tight tracking-tight text-emerald-100 sm:text-5xl">
+            <span className="glow-emerald">Intercept</span> synthetic voices
+            <br />
+            <span className="text-emerald-500/60">// </span>
+            <span className="text-emerald-300">expose</span> fraud calls
+            <span className="blink-caret ml-1" />
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-pretty text-slate-400">
-            Record or upload a suspicious call. VoxGuard analyses the acoustic
-            signal and the spoken content to flag synthetic voices and
-            social-engineering fraud.
+          <p className="mt-5 max-w-2xl font-mono text-sm leading-relaxed text-emerald-200/70">
+            &gt; A red-team-grade voice forensics console. Record or upload a
+            suspect call — <span className="text-emerald-300">four specialist models</span> analyse
+            spectral artifacts, vocoder fingerprints, liveness and social-engineering vectors
+            to surface a signed forensic verdict.
           </p>
+          <div className="mt-4 flex flex-wrap gap-2 font-mono text-[10px] uppercase tracking-widest">
+            {[
+              "deepfake_specialist",
+              "human_verifier",
+              "anti_spoof",
+              "generalist_llm",
+              "speaker_biometrics",
+            ].map((t) => (
+              <span key={t} className="rounded border border-emerald-500/30 bg-emerald-500/5 px-2 py-1 text-emerald-300">
+                [{t}]
+              </span>
+            ))}
+          </div>
         </section>
 
-        <Card className="border-white/10 bg-white/[0.03] p-6 backdrop-blur">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <button
-              type="button"
-              onClick={status === "recording" ? stopRecording : startRecording}
-              disabled={status === "analyzing"}
-              className={`group flex items-center justify-center gap-3 rounded-lg border px-6 py-8 text-left transition ${
-                status === "recording"
-                  ? "border-rose-500/50 bg-rose-500/10"
-                  : "border-white/10 bg-white/[0.02] hover:border-emerald-400/40 hover:bg-emerald-400/5"
-              }`}
-            >
-              {status === "recording" ? (
-                <>
-                  <Square className="h-6 w-6 animate-pulse text-rose-400" />
-                  <div>
-                    <div className="font-semibold">Stop recording</div>
-                    <div className="text-xs text-slate-400">
-                      Click to finish and analyse
+        <div className="term-window">
+          <div className="term-header">
+            <span className="term-dot-red" />
+            <span className="term-dot-amber" />
+            <span className="term-dot-green" />
+            <span className="ml-2 truncate">
+              voxguard@shell — capture.sh {status === "recording" ? "[REC ●]" : status === "analyzing" ? "[SCAN ~]" : "[READY]"}
+            </span>
+          </div>
+          <div className="p-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={status === "recording" ? stopRecording : startRecording}
+                disabled={status === "analyzing"}
+                className={`group flex items-center justify-center gap-3 rounded-md border px-6 py-8 text-left font-mono transition ${
+                  status === "recording"
+                    ? "border-rose-500/60 bg-rose-500/10 shadow-[0_0_24px_rgba(244,63,94,0.25)]"
+                    : "border-emerald-500/30 bg-emerald-500/[0.04] hover:border-emerald-400 hover:bg-emerald-500/10 hover:shadow-[0_0_24px_rgba(52,211,153,0.25)]"
+                }`}
+              >
+                {status === "recording" ? (
+                  <>
+                    <Square className="h-6 w-6 animate-pulse text-rose-400" />
+                    <div>
+                      <div className="text-sm font-bold uppercase tracking-widest text-rose-300">
+                        &gt; stop_capture
+                      </div>
+                      <div className="text-[11px] text-rose-300/70">
+                        finalize buffer &amp; run pipeline
+                      </div>
                     </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <Mic className="h-6 w-6 text-emerald-400" />
-                  <div>
-                    <div className="font-semibold">Record from mic</div>
-                    <div className="text-xs text-slate-400">
-                      Capture a suspicious call in real-time
+                  </>
+                ) : (
+                  <>
+                    <Mic className="h-6 w-6 text-emerald-300 group-hover:animate-pulse" />
+                    <div>
+                      <div className="text-sm font-bold uppercase tracking-widest text-emerald-200">
+                        &gt; live_capture --mic
+                      </div>
+                      <div className="text-[11px] text-emerald-400/70">
+                        stream a suspicious call in real-time
+                      </div>
                     </div>
-                  </div>
-                </>
-              )}
-            </button>
+                  </>
+                )}
+              </button>
 
-            <label
-              className={`group flex cursor-pointer items-center justify-center gap-3 rounded-lg border border-white/10 bg-white/[0.02] px-6 py-8 text-left transition hover:border-sky-400/40 hover:bg-sky-400/5 ${
-                status === "analyzing" ? "pointer-events-none opacity-60" : ""
-              }`}
-            >
-              <Upload className="h-6 w-6 text-sky-400" />
-              <div>
-                <div className="font-semibold">Upload audio file</div>
-                <div className="text-xs text-slate-400">
-                  wav · mp3 · webm · m4a · ogg
+              <label
+                className={`group flex cursor-pointer items-center justify-center gap-3 rounded-md border border-cyan-400/30 bg-cyan-400/[0.03] px-6 py-8 text-left font-mono transition hover:border-cyan-300 hover:bg-cyan-400/10 hover:shadow-[0_0_24px_rgba(103,232,249,0.25)] ${
+                  status === "analyzing" ? "pointer-events-none opacity-60" : ""
+                }`}
+              >
+                <Upload className="h-6 w-6 text-cyan-300" />
+                <div>
+                  <div className="text-sm font-bold uppercase tracking-widest text-cyan-200">
+                    &gt; upload_payload
+                  </div>
+                  <div className="text-[11px] text-cyan-300/70">
+                    wav · mp3 · webm · m4a · ogg · flac
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  accept="audio/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleUpload(f);
+                  }}
+                />
+              </label>
+            </div>
+
+            {audioUrl && (
+              <div className="mt-4 rounded border border-emerald-500/20 bg-black/50 p-2">
+                <audio src={audioUrl} controls className="w-full" />
+              </div>
+            )}
+
+            {status === "analyzing" && (
+              <div className="mt-6 rounded border border-emerald-500/30 bg-black/40 p-4 font-mono text-xs">
+                <div className="mb-2 flex items-center gap-2 text-emerald-300">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="glow-emerald">[ pipeline ]</span>
+                  <span className="text-emerald-400/80">
+                    running specialists · deepfake · human · anti-spoof · generalist…
+                  </span>
+                </div>
+                <Progress value={progress} className="h-1.5 bg-emerald-950" />
+                <div className="mt-2 text-[10px] text-emerald-500/70">
+                  progress: {progress}% · do not disconnect target
                 </div>
               </div>
-              <input
-                type="file"
-                accept="audio/*"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) handleUpload(f);
-                }}
-              />
-            </label>
+            )}
           </div>
+        </div>
 
-          {audioUrl && <audio src={audioUrl} controls className="mt-4 w-full" />}
-
-          {status === "analyzing" && (
-            <div className="mt-6">
-              <div className="mb-2 flex items-center gap-2 text-sm text-slate-300">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Analysing audio…
-              </div>
-              <Progress value={progress} className="h-2 bg-white/10" />
-            </div>
-          )}
-        </Card>
 
         <div className="mt-6">
           <SpeakerVerificationCard />
