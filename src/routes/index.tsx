@@ -486,9 +486,9 @@ function Home() {
             <AdversarialLab
               audioUrl={audioUrl}
               baselineAi={report.aiVoiceScore}
-              runAnalyze={async (blob, format) => {
+              runAnalyze={async (blob, format, signal) => {
                 const base64 = await blobToBase64(blob);
-                return analyze({ data: { audioBase64: base64, format } });
+                return analyze({ data: { audioBase64: base64, format }, signal } as never);
               }}
             />
 
