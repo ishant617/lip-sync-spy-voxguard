@@ -1011,10 +1011,13 @@ function PipelineCard({
   text: string;
 }) {
   return (
-    <Card className="border-white/10 bg-white/[0.03] p-5">
-      <div className="mb-2 flex items-center gap-2 text-emerald-400">{icon}</div>
-      <div className="mb-1 font-semibold">{title}</div>
-      <p className="text-sm text-slate-400">{text}</p>
+    <Card className="border-emerald-500/25 bg-black/40 p-5 font-mono transition hover:border-emerald-400/60 hover:shadow-[0_0_28px_rgba(52,211,153,0.18)]">
+      <div className="mb-3 flex items-center gap-2 text-emerald-300">
+        {icon}
+        <span className="text-[10px] uppercase tracking-[0.25em] text-emerald-500/70">module</span>
+      </div>
+      <div className="mb-1 text-sm font-bold text-emerald-200 glow-emerald">&gt; {title}</div>
+      <p className="text-xs leading-relaxed text-emerald-100/60">{text}</p>
     </Card>
   );
 }
